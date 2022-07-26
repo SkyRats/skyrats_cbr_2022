@@ -12,7 +12,7 @@ TOL = 0.5 #tolerancia de erro das bases
 class base:
     def __init__(self, name):
         self._name = name
-        self._coordenate = [self.drone_pose.pose.position.x, self.drone_pose.pose.position.y, self.drone_pose.pose.position.z]
+        self._coordenate = [self.mav2.drone_pose.pose.position.x, self.mav2.drone_pose.pose.position.y, self.mav2.drone_pose.pose.position.z]
 
 class fase1:
     def __init__(self,mav):
@@ -20,7 +20,7 @@ class fase1:
 
         self.bases_visitadas = 0
         self.base_econtrada
-        self.bases_salvas =[]   
+        self.bases_salvas = []   
         self.ja_mapeada = False  
         self.vel = 0.2
 
@@ -29,10 +29,10 @@ class fase1:
     #def tubo(self):          
     
     def mapping(self):
-        cord_x = self.drone_pose.pose.position.x
-        cord_y = self.drone_pose.pose.position.y
+        cord_x = self.mav2.drone_pose.pose.position.x
+        cord_y = self.mav2.drone_pose.pose.position.y
         self.time(8)    
-        hsv = cv2.cvtColor(self.cv_image,cv2.COLOR_BGR2HSV)
+        hsv = cv2.cvtColor(self.mav2.cam,cv2.COLOR_BGR2HSV)
 
         #alterar para encontrar plataformas
         lower_blue = np.array([110,50,50])
@@ -51,7 +51,7 @@ class fase1:
             cv2.waitKey(15)
 
             one_pixel_in_meters = 0.0168      #Foi visto empiricamente que a uma altura de 4 metros cada pixel da imagem equivale a 0,28 metros
-            image_center_x = self.image_pixel_width/2   
+            image_center_x = self.image_pixel_width/2   #Mudar para variavel
             image_center_y = self.image_pixel_height/2
 
             dif_x = i[0] - image_center_x # dif_x = diferenca entre o centro da imagem e o centro do barco
@@ -69,7 +69,7 @@ class fase1:
                         self.ja_mapeada = True
             if self.ja_mapeada == False:
                 print("Base localizada: " + str(cord_base_x) + " , " + str(cord_base_y))
-                self.mav2.set_position(cord_base_x, cord_base_y, 3)
+                self.mav2.go_to_local(cord_base_x, cord_base_y, 3)
                 self.precision_land()
                 if self.bases_visitadas == 0:
                     self.bases_salvas.append[base("A")]
@@ -85,19 +85,19 @@ class fase1:
                 self.time(8)
                 self.mav2.takeoff(3) #verificar se eh o quanto sobe ou em relacao ao inicio
                 self.time(4)
-                self.mav2.set_position(cord_x, cord_y, 3) 
+                self.mav2.go_to_local(cord_x, cord_y, 3) 
             self.ja_mapeada = False
 
     def trajectory(self):
         self.mav2.takeoff(3)
-        self.mav2.set_position(0, 1, 3) 
+        self.mav2.go_to_local(0, 1, 3) 
 
-        trg_x = abs(self.drone_pose.pose.position.x - 6)
+        trg_x = abs(self.mav2.drone_pose.pose.position.x - 6)
         while trg_x > TOL :
             self.mav2.set_vel(self.vel, 0,0,0,0,0)
-            cord_x = self.drone_pose.pose.position.x
-            cord_y = self.drone_pose.pose.position.y
-            hsv = cv2.cvtColor(self.cv_image,cv2.COLOR_BGR2HSV)
+            cord_x = self.mav2.drone_pose.pose.position.x
+            cord_y = self.mav2.drone_pose.pose.position.y
+            hsv = cv2.cvtColor(self.mav2.cam,cv2.COLOR_BGR2HSV)
 
             #alterar para encontrar plataformas
             lower_blue = np.array([110,50,50])
@@ -127,16 +127,16 @@ class fase1:
 
                 cord_base_x = cord_x - meters_x #Coordenada da base movel
                 cord_base_y = cord_y - meters_y
-                if abs(cord_base_y - self.drone_pose.pose.position.y) < TOL :
+                if abs(cord_base_y - self.mav2.drone_pose.pose.position.y) < TOL :
                     self.mapping()
             self.time(8)
 
-        trg_y = abs(self.drone_pose.pose.position.y - 3)
+        trg_y = abs(self.mav2.drone_pose.pose.position.y - 3)
         while trg_y > TOL :
             self.mav2.set_vel(0, self.vel,0,0,0,0)
-            cord_x = self.drone_pose.pose.position.x
-            cord_y = self.drone_pose.pose.position.y
-            hsv = cv2.cvtColor(self.cv_image,cv2.COLOR_BGR2HSV)
+            cord_x = self.mav2.drone_pose.pose.position.x
+            cord_y = self.mav2.drone_pose.pose.position.y
+            hsv = cv2.cvtColor(self.mav2.cam,cv2.COLOR_BGR2HSV)
 
             #alterar para encontrar plataformas
             lower_blue = np.array([110,50,50])
@@ -166,16 +166,16 @@ class fase1:
 
                 cord_base_x = cord_x - meters_x #Coordenada da base movel
                 cord_base_y = cord_y - meters_y
-                if abs(cord_base_x - self.drone_pose.pose.position.x) < TOL :
+                if abs(cord_base_x - self.mav2.drone_pose.pose.position.x) < TOL :
                     self.mapping()
             self.time(8)
 
-        trg_x = abs(self.drone_pose.pose.position.x - 0.5)
+        trg_x = abs(self.mav2.drone_pose.pose.position.x - 0.5)
         while trg_x > TOL :
             self.mav2.set_vel(-self.vel, 0,0,0,0,0)
-            cord_x = self.drone_pose.pose.position.x
-            cord_y = self.drone_pose.pose.position.y
-            hsv = cv2.cvtColor(self.cv_image,cv2.COLOR_BGR2HSV)
+            cord_x = self.mav2.drone_pose.pose.position.x
+            cord_y = self.mav2.drone_pose.pose.position.y
+            hsv = cv2.cvtColor(self.mav2.cam,cv2.COLOR_BGR2HSV)
 
             #alterar para encontrar plataformas
             lower_blue = np.array([110,50,50])
@@ -205,7 +205,7 @@ class fase1:
 
                 cord_base_x = cord_x - meters_x #Coordenada da base movel
                 cord_base_y = cord_y - meters_y
-                if abs(cord_base_y - self.drone_pose.pose.position.y) < TOL :
+                if abs(cord_base_y - self.mav2.drone_pose.pose.position.y) < TOL :
                     self.mapping()
             self.time(8)
 
@@ -216,5 +216,7 @@ class fase1:
 
 
 if __name__ == "__main__":
+    rclpy.init(args=sys.argv)
+    mav = MAV2()
     missao = fase1(mav)
     missao.trajectory()

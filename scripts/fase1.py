@@ -8,6 +8,7 @@ from pickle import FALSE
 import time
 
 TOL = 0.5 #tolerancia de erro das bases 
+CAM_FOV = 1,64061 #94 graus
 
 class base:
     def __init__(self, name):
@@ -15,8 +16,8 @@ class base:
         self._coordenate = [self.mav2.drone_pose.pose.position.x, self.mav2.drone_pose.pose.position.y, self.mav2.drone_pose.pose.position.z]
 
 class fase1:
-    def __init__(self,mav):
-        self.mav2 = MAV2
+    def __init__(self, mav2):
+        self.mav2 = mav2
 
         self.bases_visited = 0
         self.bases_stored = []   
@@ -25,8 +26,8 @@ class fase1:
 
         self.tube_found = False
         self.fim_encontrado = False
-        self.cx_tube, self.cy_tube, self.tw, self.th = 0.0
-        self.rows, self.cols = 0
+        self.cx_tube = self.cy_tube = self.tw = self.th = 0.0
+        self.rows = self.cols = 0
 
         
 
@@ -36,13 +37,15 @@ class fase1:
     def tube(self, mask_tube): 
         cord_x = self.mav2.drone_pose.pose.position.x
         cord_y = self.mav2.drone_pose.pose.position.y
-        one_pixel_in_meters = 0.0168      #Foi visto empiricamente que a uma altura de 4 metros cada pixel da imagem equivale a 0,28 metros
-        h, w, c = mask_tube.shape
+        
+        dist_real = np.tan(CAM_FOV/2) * self.mav2.drone_pose.pose.position.z
+        w, h, c = mask_tube.shape
+        one_pixel_in_meters = dist_real/(w/2)
         image_center_x = w/2 
         image_center_y = h/2
 
-        dif_x = i[0] - image_center_x # dif_x = diferenca entre o centro da imagem e o centro do barco
-        dif_y = i[1] - image_center_y
+        dif_x = self.cx_tube - image_center_x # dif_x = diferenca entre o centro da imagem e o centro do barco
+        dif_y = self.cy_tube  - image_center_y
 
         meters_y = dif_x * one_pixel_in_meters  # Conversao da diferenca em pixels para metros
         meters_x = dif_y * one_pixel_in_meters
@@ -52,7 +55,9 @@ class fase1:
         self.mav2.go_to_local(cord_base_x, cord_base_y , 3)
         time.sleep(2)
         self.mav2.go_to_local(cord_base_x, cord_base_y , 1)
-        
+        hight_saved_x = self.mav2.drone_pose.pose.position.x
+        hight_saved_y = self.mav2.drone_pose.pose.position.y
+
         _, threshold = cv2.threshold(mask_tube, 0, 10, cv2.THRESH_BINARY)
         
         contours, _ = cv2.findContours(
@@ -67,25 +72,33 @@ class fase1:
                 contour, 0.01 * cv2.arcLength(contour, True), True)
             
             if len(approx) == 4:
-                # compute the bounding box of the contour and use the
-                # bounding box to compute the aspect ratio
-                (self.cx_tube, self.cy_tube, self.tw, self.th) = cv2.boundingRect(approx)   
+                M = cv2.moments(contour)
+                try: 
+                    self.cx_tube = int(M['m10']/M['m00']) #Passa o ponto do frame que foram encontradas os barcos
+                    self.cy_tube = int(M['m01']/M['m00'])
+                except ZeroDivisionError:
+                    continue
+                (cx, cy, self.tw, self.th) = cv2.boundingRect(approx)   
 
         atan_vel = self.tw/self.th
-        hight_i = self.th/2
+
+        hight_i = (self.th**2 +self.tw**2)/2
 
         self.mav2.go_to_local(cord_base_x, cord_base_y , 1)
-        
+        self.mav2.rotate(atan_vel)
+
         while self.fim_encontrado == False:
-            self.mav2.set_vel(self.vel * np.sin(atan_vel), self.vel * np.cos(atan_vel),0,0,0,0)
-            self.rows, self.cols, b = self.mask_tube.shape
+            self.mav2.set_vel(self.vel, 0,0,0,0,0)
+            self.rows, self.cols, b = mask_tube.shape
             for i in range(self.cols):
                 if mask_tube[self.rows - 200, i] == [255, 255, 255]:
                     self.fim_encontrado = False
                     i = self.cols + 1
                 else: 
                     self.fim_encontrado = True
-            dist_p += 0.2
+            cv2.imshow("output", np.hstack([self.mav2.cam, mask_tube])) #teste
+            cv2.waitKey(0)
+            
         
         contours, _ = cv2.findContours(
             threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -99,21 +112,30 @@ class fase1:
                 contour, 0.01 * cv2.arcLength(contour, True), True)
             
             if len(approx) == 4:
-                # compute the bounding box of the contour and use the
-                # bounding box to compute the aspect ratio
-                (self.cx_tube, self.cy_tube, self.tw, self.th) = cv2.boundingRect(approx)   
+                M = cv2.moments(contour)
+                try: 
+                    self.cx_tube = int(M['m10']/M['m00']) #Passa o ponto do frame que foram encontradas os barcos
+                    self.cy_tube = int(M['m01']/M['m00'])
+                except ZeroDivisionError:
+                    continue
+                (cx, cy, self.tw, self.th) = cv2.boundingRect(approx)  
 
-        hight_f = self.th/2
-        hight_total = hight_i + hight_f + dist_p # mostrar o width e o height
+        hight_f = (self.th**2 +self.tw**2)/2
+        hight_final_x = self.mav2.drone_pose.pose.position.x
+        hight_final_y = self.mav2.drone_pose.pose.position.y
+        hight_total = hight_i + hight_f + np.sqrt((hight_final_x-hight_saved_x)**2 + (hight_final_y - hight_saved_y)**2 )
         self.tube_found = True
+        print("tube hight: " + hight_total + "m")
+        print("tube width: " + self.tw + "m")
 
         self.mav2.go_to_local(cord_x, cord_y , 3)
-
-        self.tube_found = True     
+        self.tube_found = True    
+ 
     
     def mapping(self):
         cord_x = self.mav2.drone_pose.pose.position.x
         cord_y = self.mav2.drone_pose.pose.position.y
+        self.mav2.takeoff(3)
         hsv = cv2.cvtColor(self.mav2.cam,cv2.COLOR_BGR2HSV)
 
         #alterar para encontrar plataformas
@@ -131,9 +153,12 @@ class fase1:
             # draw the center of the circle
             cv2.circle(mask_BasePossible,(i[0],i[1]),2,(0,0,255),3)
             cv2.waitKey(15)
-
-            one_pixel_in_meters = 0.0168      #Foi visto empiricamente que a uma altura de 4 metros cada pixel da imagem equivale a 0,28 metros
-            h, w, c = mask_BasePossible.shape
+            cv2.imshow("output", np.hstack([self.mav2.cam, mask_BasePossible])) #teste
+            cv2.waitKey(0)
+            
+            dist_real = np.tan(CAM_FOV/2) * self.mav2.drone_pose.pose.position.z
+            w, h, c = mask_BasePossible.shape
+            one_pixel_in_meters = dist_real/(w/2)
             image_center_x = w/2 
             image_center_y = h/2
 
@@ -170,6 +195,7 @@ class fase1:
                 time.sleep(4)
                 self.mav2.go_to_local(cord_x, cord_y, 3) 
             self.ja_mapeada = False
+            
 
     def trajectory(self):
         self.mav2.takeoff(3)
@@ -196,9 +222,12 @@ class fase1:
                 # draw the center of the circle
                 cv2.circle(mask_BasePossible,(i[0],i[1]),2,(0,0,255),3)
                 cv2.waitKey(15)
-
-                one_pixel_in_meters = 0.0168      #Foi visto empiricamente que a uma altura de 4 metros cada pixel da imagem equivale a 0,28 metros
-                h, w, c = mask_BasePossible.shape
+                cv2.imshow("output", np.hstack([self.mav2.cam, mask_BasePossible])) #teste
+                cv2.waitKey(0)
+                
+                dist_real = np.tan(CAM_FOV/2) * self.mav2.drone_pose.pose.position.z
+                w, h, c = mask_BasePossible.shape
+                one_pixel_in_meters = dist_real/(w/2)
                 image_center_x = w/2 
                 image_center_y = h/2
 
@@ -211,7 +240,8 @@ class fase1:
                 cord_base_x = cord_x - meters_x #Coordenada da base movel
                 cord_base_y = cord_y - meters_y
                 if abs(cord_base_y - self.mav2.drone_pose.pose.position.y) < TOL :
-                    self.mapping()
+                    #self.mapping()
+                    print("base encontrada")
             time.sleep(1)
 
         while abs(self.mav2.drone_pose.pose.position.y - 3)  > TOL :
@@ -235,9 +265,12 @@ class fase1:
                 # draw the center of the circle
                 cv2.circle(mask_BasePossible,(i[0],i[1]),2,(0,0,255),3)
                 cv2.waitKey(15)
+                cv2.imshow("output", np.hstack([self.mav2.cam, mask_BasePossible])) #teste
+                cv2.waitKey(0)
 
-                one_pixel_in_meters = 0.0168      #Foi visto empiricamente que a uma altura de 4 metros cada pixel da imagem equivale a 0,28 metros
-                h, w, c = mask_BasePossible.shape
+                dist_real = np.tan(CAM_FOV/2) * self.mav2.drone_pose.pose.position.z
+                w, h, c = mask_BasePossible.shape
+                one_pixel_in_meters = dist_real/(w/2)
                 image_center_x = w/2 
                 image_center_y = h/2
 
@@ -250,7 +283,8 @@ class fase1:
                 cord_base_x = cord_x - meters_x #Coordenada da base movel
                 cord_base_y = cord_y - meters_y
                 if abs(cord_base_x - self.mav2.drone_pose.pose.position.x) < TOL :
-                    self.mapping()
+                    #self.mapping()
+                    print("base encontrada")
                 time.sleep(1)
 
 
@@ -275,9 +309,12 @@ class fase1:
                 # draw the center of the circle
                 cv2.circle(mask_BasePossible,(i[0],i[1]),2,(0,0,255),3)
                 cv2.waitKey(15)
+                cv2.imshow("output", np.hstack([self.mav2.cam, mask_BasePossible])) #teste
+                cv2.waitKey(0)
 
-                one_pixel_in_meters = 0.0168      #Foi visto empiricamente que a uma altura de 4 metros cada pixel da imagem equivale a 0,28 metros
-                h, w, c = mask_BasePossible.shape
+                dist_real = np.tan(CAM_FOV/2) * self.mav2.drone_pose.pose.position.z
+                w, h, c = mask_BasePossible.shape
+                one_pixel_in_meters = dist_real/(w/2)
                 image_center_x = w/2 
                 image_center_y = h/2
 
@@ -290,7 +327,8 @@ class fase1:
                 cord_base_x = cord_x - meters_x #Coordenada da base movel
                 cord_base_y = cord_y - meters_y
                 if abs(cord_base_y - self.mav2.drone_pose.pose.position.y) < TOL :
-                    self.mapping()
+                    #self.mapping()
+                    print("base encontrada")
             time.sleep(1)
 
         while abs(self.mav2.drone_pose.pose.position.y - 1) > TOL :
@@ -318,12 +356,21 @@ class fase1:
                     contour, 0.01 * cv2.arcLength(contour, True), True)
                 
                 if len(approx) == 4:
-                    # compute the bounding box of the contour and use the
-                    # bounding box to compute the aspect ratio
-                    (self.cx_tube, self.cy_tube, self.tw, self.th) = cv2.boundingRect(approx)
+                    M = cv2.moments(contour)
+                    try: 
+                        self.cx_tube = int(M['m10']/M['m00']) #Passa o ponto do frame que foram encontradas os barcos
+                        self.cy_tube = int(M['m01']/M['m00'])
+                    except ZeroDivisionError:
+                        continue
+                    (cx, cy, self.tw, self.th) = cv2.boundingRect(approx)  
                     tube_center = (self.cx_tube, self.cy_tube)
+            
+            cv2.imshow("output", np.hstack([self.mav2.cam, mask_tube])) #teste
+            cv2.waitKey(0)
+
             if tube_center != (0, 0):
-                self.tube(mask_tube)
+                #self.tube(mask_tube)
+                print("tubo encontrado")
 
         self.mav2.go_to_local(0, 0, 3)
         self.precision_land()
@@ -331,7 +378,8 @@ class fase1:
 
 
 if __name__ == "__main__":
-    rclpy.init(args=sys.argv)
+    rclpy.init()
     mav = MAV2()
     missao = fase1(mav)
     missao.trajectory()
+    

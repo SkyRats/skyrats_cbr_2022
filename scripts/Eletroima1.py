@@ -1,19 +1,19 @@
-import RPi.GPIO as GPIO #usar wpi?
-import time
+import odroid_wiringpi as wpi
 
 PIN = 1 #tem que decidir quais os PINs iniciais pro buzzer, led e eletroima
 
 #se consumir muito pouca corrente:
 class Eletroima:
-    def __init__(self) -> None:
+    def __init__(self):
         self.pin = PIN
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(self.pin, GPIO.OUT, initial=GPIO.HIGH)
+        wpi.wiringPiSetup()
+		wpi.pinMode(self.pin, 1)
+        wpi.digitalWrite(self.pin, 1)
    
     def soltar(self):
-        GPIO.output(self.pin, GPIO.LOW)
-        time.sleep(5) #desliga por 5 segundos, testar se é o suficiente
-        GPIO.output(self.pin, GPIO.HIGH)
+        wpi.digitalWrite(self.pin, 0)
+        wpi.delay(5000) #desliga por 5 segundos, testar se é o suficiente
+        wpi.digitalWrite(self.pin, 1)
     
     def setPin(self, pin):
         self.pin = pin

@@ -9,6 +9,8 @@ class displayDetection:
         self.cap = cv2.VideoCapture(0)
         self.squares = []
         self.reader = easyocr.Reader(['pt'])
+        self.gas_percentual_image = []
+        self.gas_percentual = []
 
     def find_squares(self, contours):
 
@@ -33,18 +35,34 @@ class displayDetection:
         y2 = np.max(y)
 
         image_copy = self.image.copy()
-        self.cropped_image = image_copy[x1:x2, y1:y2]
-        self.cropped_image1 = self.cropped_image[round(self.cropped_image.shape[0] * 0.03):round(self.cropped_image.shape[0] / 2),
-                         round(self.cropped_image.shape[1] * 0.01):round(self.cropped_image.shape[1] * 0.65)]
+        cropped_image = image_copy[x1:x2, y1:y2]
+        cropped_image1 = cropped_image[round(cropped_image.shape[0] * 0.03):round(cropped_image.shape[0] / 2),
+                         round(cropped_image.shape[1] * 0.01):round(cropped_image.shape[1] * 0.65)]
 
-        self.cropped_image2 = self.cropped_image[round(self.cropped_image.shape[0] / 2):round(self.cropped_image.shape[0]),
-                         round(self.cropped_image.shape[1] * 0.07):round(self.cropped_image.shape[1] * 0.65)]
+        cropped_image2 = cropped_image[round(cropped_image.shape[0] / 2):round(cropped_image.shape[0]),
+                         round(cropped_image.shape[1] * 0.07):round(cropped_image.shape[1] * 0.65)]
+
+        self.gas_percentual_image = []
+
+        #crop the first character of the gas percentual number
+        cropped_image3 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.10):round(cropped_image1.shape[1]*0.55)]
+
+        #crop the second character of the gas percentual number
+        cropped_image4 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.55):cropped_image1.shape[1]]
+
+        #crop the zero adjustment number
+        cropped_image5 = cropped_image2[0:cropped_image2.shape[0], round(cropped_image2.shape[1]*0.52):round(cropped_image2.shape[1]*0.99)]
+        
+        self.gas_percentual_image.append(cropped_image3)
+        self.gas_percentual_image.append(cropped_image4)
+       
+        
 
     def OCR(self, image):
 
         result = self.reader.readtext(image)
-        return result
-
+        print(result)
+        
     def detection_loop(self):
         i = 0
 
@@ -52,9 +70,8 @@ class displayDetection:
             self.squares = []
             success, self.image = self.cap.read()
 
-            kernel = np.ones((5, 5), np.uint8)
-            self.image = cv2.dilate(self.image, kernel, iterations = 2)
-            self.image = cv2.erode(self.image, kernel)
+            kernel = np.ones((3, 3), np.uint8)
+            self.image = cv2.dilate(self.image, kernel)
             gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
             ret, thresh = cv2.threshold(gray, 200, 255, cv2.CHAIN_APPROX_NONE)
 
@@ -74,11 +91,13 @@ class displayDetection:
 
                 if(i < 10):
 
-                    result1 = self.OCR(self.cropped_image1)
-                    result2 = self.OCR(self.cropped_image2)
+                    self.gas_percentual.append(self.OCR(self.gas_percentual_image[0]))
+                    self.gas_percentual.append(self.OCR(self.gas_percentual_image[1]))
+                    
 
-                    print(result1)
-                    print(result2)
+                    print(self.gas_percentual[0])
+                    print(self.gas_percentual[1])
+                    
                     i = i + 1
 
             cv2.imshow("image", self.image)

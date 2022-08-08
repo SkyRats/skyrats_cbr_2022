@@ -4,6 +4,7 @@ import easyocr
 import time
 
 class displayDetection:
+    
     def __init__(self):
 
         self.cap = cv2.VideoCapture(0)
@@ -23,7 +24,7 @@ class displayDetection:
 
                 if aspectRatio >= 0.95 and aspectRatio < 1.05 and cv2.contourArea(contour) > 600:
                     self.squares.append(contour)
-                    cv2.drawContours(self.image, [approx], 0, (255, 0, 0), 4)
+                    #cv2.drawContours(self.image, [approx], 0, (255, 0, 0), 4)
 
     def crop_image(self, mask):
 
@@ -84,6 +85,7 @@ class displayDetection:
                 sorted_squares = sorted(self.squares, key = cv2.contourArea, reverse = True )
                 mask = np.zeros(self.image.shape, np.uint8)
                 cv2.drawContours(mask, [sorted_squares[0]], 0, (0,0, 255), -1, )
+                cv2.drawContours(self.image, [sorted_squares[0]], 0, (0,0, 255), -1, )
                 cv2.imshow("mask", mask)
 
                 self.crop_image(mask)
@@ -91,6 +93,7 @@ class displayDetection:
 
                 if(i < 10):
 
+                    self.gas_percentual = []
                     self.gas_percentual.append(self.OCR(self.gas_percentual_image[0]))
                     self.gas_percentual.append(self.OCR(self.gas_percentual_image[1]))
                     

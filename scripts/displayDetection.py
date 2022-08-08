@@ -61,7 +61,7 @@ class displayDetection:
     def OCR(self, image):
 
         result = self.reader.readtext(image)
-        print(result)
+        return result
         
     def detection_loop(self):
         i = 0

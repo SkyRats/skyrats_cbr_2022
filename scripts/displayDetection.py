@@ -57,12 +57,12 @@ class displayDetection:
 
     
         #crop the image that may contain 1 or not
-        cropped_image6 = cropped_image2[0:round(cropped_image2.shape[0]*0.90), round(cropped_image2.shape[1]*0.34):round(cropped_image2.shape[1]*0.51)]
+        cropped_image6 = cropped_image2[0:round(cropped_image2.shape[0]*0.90), round(cropped_image2.shape[1]*0.40):round(cropped_image2.shape[1]*0.51)]
 
         #crop the image that may contain "-" or not
-        cropped_image7 = cropped_image2[round(cropped_image2.shape[0]*0.35):round(cropped_image2.shape[0]*0.55), 0:round(cropped_image2.shape[1]*0.38)]
+        cropped_image7 = cropped_image2[round(cropped_image2.shape[0]*0.35):round(cropped_image2.shape[0]*0.55), round(cropped_image2.shape[1]*0.1):round(cropped_image2.shape[1]*0.40)]
 
-        #cv2.imshow("image2", cropped_image6)
+        cv2.imshow("image2", cropped_image7)
         #append the numbers images in their lists
 
         self.gas_percentual_image = []
@@ -85,12 +85,12 @@ class displayDetection:
     def isEmpty(self, image, tolerance):
 
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        ret, thresh = cv2.threshold(gray, 100, 255, cv2.CHAIN_APPROX_NONE)
+        ret, thresh = cv2.threshold(gray, 140, 255, cv2.CHAIN_APPROX_NONE)
 
-        total = image.size
+        total = thresh.size
         zero = total - np.count_nonzero(thresh)
         ratio = zero/total
-
+    
         if ratio > tolerance:
             return True
 
@@ -136,8 +136,8 @@ class displayDetection:
                     self.gas_percentual.append(self.OCR(self.gas_percentual_image[1]))
                     self.zero_adjustment = self.OCR(self.zero_adjustment_image)[0][1]
 
-                    one = self.isEmpty(self.one_image, 0.08)
-                    minus = self.isEmpty(self.minus_image, 0.08)
+                    one = self.isEmpty(self.one_image, 0.2)
+                    minus = self.isEmpty(self.minus_image, 0.2)
 
                     if one:
                         self.zero_adjustment = int(self.zero_adjustment) + 10

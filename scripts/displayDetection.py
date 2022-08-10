@@ -123,13 +123,13 @@ class displayDetection:
                 #cv2.drawContours(self.image, [sorted_squares[0]], 0, (0,0, 255), -1, )
                 #cv2.imshow("mask", mask)
 
-                self.crop_image(mask)
+                
 
 
                 if(i < 5):
                     
                     #apply the OCR algorithm over the numbers images
-
+                    self.crop_image(mask)
                     self.gas_percentual = []
                     self.zero_adjustment = 0
                     self.gas_percentual.append(self.OCR(self.gas_percentual_image[0]))
@@ -148,8 +148,8 @@ class displayDetection:
                     
                     
                     self.gasPercentual = int(str(self.gas_percentual[0][0][1]) + str(self.gas_percentual[1][0][1]))
-                    print(self.gasPercentual)
-                    print(self.zero_adjustment)
+                    print("Gas Percentual: " + str(self.gasPercentual) + "%")
+                    print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
                     i = i + 1
 
             cv2.imshow("image", self.image)

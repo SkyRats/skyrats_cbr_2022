@@ -7,13 +7,13 @@ class displayDetection:
     
     def __init__(self):
 
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture('/home/renato/skyrats_ws2/src/skyrats_cbr_2022/images/Video1.mp4')
         self.squares = []
         self.reader = easyocr.Reader(['pt'])
         self.gas_percentual_image = []
         self.gas_percentual = []
         self.zero_adjustment = []
-        self.zero_adjustment_image = []
+    
 
     def find_squares(self, contours):
 
@@ -24,7 +24,7 @@ class displayDetection:
                 x, y, w, h = cv2.boundingRect(approx)
                 aspectRatio = float(w) / h
 
-                if aspectRatio >= 0.95 and aspectRatio < 1.05 and cv2.contourArea(contour) > 600:
+                if aspectRatio >= 0.95 and aspectRatio < 1.05 and cv2.contourArea(contour) > 2500:
                     self.squares.append(contour)
                     cv2.drawContours(self.image, [approx], 0, (255, 0, 0), 4)
 
@@ -47,7 +47,7 @@ class displayDetection:
         cropped_image2 = cropped_image[round(cropped_image.shape[0]/2):round(cropped_image.shape[0]*0.95), round(cropped_image.shape[1]*0.07):round(cropped_image.shape[1]*0.63)]
 
         #crop the first character of the gas percentual number
-        cropped_image3 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.10):round(cropped_image1.shape[1]*0.55)]
+        cropped_image3 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.06):round(cropped_image1.shape[1]*0.55)]
 
         #crop the second character of the gas percentual number
         cropped_image4 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.55):cropped_image1.shape[1]]
@@ -55,21 +55,23 @@ class displayDetection:
         #crop the zero adjustment number
         cropped_image5 = cropped_image2[0:cropped_image2.shape[0], round(cropped_image2.shape[1]*0.52):round(cropped_image2.shape[1]*0.99)]
 
+    
         #crop the image that may contain 1 or not
         cropped_image6 = cropped_image2[0:round(cropped_image2.shape[0]*0.90), round(cropped_image2.shape[1]*0.34):round(cropped_image2.shape[1]*0.51)]
 
         #crop the image that may contain "-" or not
         cropped_image7 = cropped_image2[round(cropped_image2.shape[0]*0.35):round(cropped_image2.shape[0]*0.55), 0:round(cropped_image2.shape[1]*0.38)]
 
+        #cv2.imshow("image2", cropped_image6)
         #append the numbers images in their lists
 
         self.gas_percentual_image = []
-        self.zero_adjustment_image = []
-
 
         self.gas_percentual_image.append(cropped_image3)
         self.gas_percentual_image.append(cropped_image4)
-        self.zero_adjustment_image.append(cropped_image5)
+        self.zero_adjustment_image = cropped_image5
+        self.one_image = cropped_image6
+        self.minus_image = cropped_image7
 
         
     #Optical Character Recognition
@@ -78,14 +80,32 @@ class displayDetection:
 
         result = self.reader.readtext(image)
         return result
-        
+    
+    #check if there is something in a image
+    def isEmpty(self, image, tolerance):
+
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        ret, thresh = cv2.threshold(gray, 100, 255, cv2.CHAIN_APPROX_NONE)
+
+        total = image.size
+        zero = total - np.count_nonzero(thresh)
+        ratio = zero/total
+
+        if ratio > tolerance:
+            return True
+
+        else:
+            return False
+
+
     def detection_loop(self):
         i = 0
 
         while self.cap.isOpened():
+
             self.squares = []
             success, self.image = self.cap.read()
-
+            self.image = cv2.resize(self.image, (1280,720))
             kernel = np.ones((3, 3), np.uint8)
             self.image = cv2.dilate(self.image, kernel)
             gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
@@ -99,27 +119,37 @@ class displayDetection:
 
                 sorted_squares = sorted(self.squares, key = cv2.contourArea, reverse = True )
                 mask = np.zeros(self.image.shape, np.uint8)
-                #cv2.drawContours(mask, [sorted_squares[-1]], 0, (0,0, 255), -1, )
-                #cv2.drawContours(self.image, [sorted_squares[-1]], 0, (0,0, 255), -1, )
+                cv2.drawContours(mask, [sorted_squares[0]], 0, (0,0, 255), -1, )
+                #cv2.drawContours(self.image, [sorted_squares[0]], 0, (0,0, 255), -1, )
                 #cv2.imshow("mask", mask)
 
                 self.crop_image(mask)
 
 
-                if(i < 10):
+                if(i < 5):
                     
                     #apply the OCR algorithm over the numbers images
 
                     self.gas_percentual = []
+                    self.zero_adjustment = 0
                     self.gas_percentual.append(self.OCR(self.gas_percentual_image[0]))
                     self.gas_percentual.append(self.OCR(self.gas_percentual_image[1]))
-                    self.zero_adjustment.append(self.OCR(self.zero_adjustment_image[0]))
-                    
-                    self.zero_adjustment = []
+                    self.zero_adjustment = self.OCR(self.zero_adjustment_image)[0][1]
 
-                    print(self.gas_percentual[0])
-                    print(self.gas_percentual[1])
-                    print(self.zero_adjustment[0])
+                    one = self.isEmpty(self.one_image, 0.08)
+                    minus = self.isEmpty(self.minus_image, 0.08)
+
+                    if one:
+                        self.zero_adjustment = int(self.zero_adjustment) + 10
+
+                    if minus:
+                        self.zero_adjustment = int(self.zero_adjustment)*-1
+
+                    
+                    
+                    self.gasPercentual = int(str(self.gas_percentual[0][0][1]) + str(self.gas_percentual[1][0][1]))
+                    print(self.gasPercentual)
+                    print(self.zero_adjustment)
                     i = i + 1
 
             cv2.imshow("image", self.image)

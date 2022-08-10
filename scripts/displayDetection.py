@@ -1,3 +1,4 @@
+
 import cv2
 import numpy as np
 import easyocr
@@ -79,8 +80,13 @@ class displayDetection:
 
 
         result = self.reader.readtext(image)
-        return result
-    
+        if result:
+            
+            return result[0][1]
+
+        else: 
+            return False
+
     #check if there is something in a image
     def isEmpty(self, image, tolerance):
 
@@ -130,26 +136,32 @@ class displayDetection:
                     
                     #apply the OCR algorithm over the numbers images
                     self.crop_image(mask)
-                    self.gas_percentual = []
+                    self.gas_percentual = [0,0]
                     self.zero_adjustment = 0
-                    self.gas_percentual.append(self.OCR(self.gas_percentual_image[0]))
-                    self.gas_percentual.append(self.OCR(self.gas_percentual_image[1]))
-                    self.zero_adjustment = self.OCR(self.zero_adjustment_image)[0][1]
+
+                    self.gas_percentual = [self.OCR(self.gas_percentual_image[0]), self.OCR(self.gas_percentual_image[0])]                 
+                    self.zero_adjustment = self.OCR(self.zero_adjustment_image)
 
                     one = self.isEmpty(self.one_image, 0.2)
                     minus = self.isEmpty(self.minus_image, 0.2)
 
-                    if one:
-                        self.zero_adjustment = int(self.zero_adjustment) + 10
 
-                    if minus:
-                        self.zero_adjustment = int(self.zero_adjustment)*-1
+                    if self.gas_percentual[0] and self.gas_percentual[1]:
+                        
+                        self.gasPercentual = int(str(self.gas_percentual[0]) + str(self.gas_percentual[1]))
+                        print("Gas Percentual: " + str(self.gasPercentual) + "%")
+                    
+                    if self.zero_adjustment:    
 
+                        if one:
+                            self.zero_adjustment = int(self.zero_adjustment) + 10
+
+                        if minus:
+                            self.zero_adjustment = int(self.zero_adjustment)*-1
+
+                        print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
                     
                     
-                    self.gasPercentual = int(str(self.gas_percentual[0][0][1]) + str(self.gas_percentual[1][0][1]))
-                    print("Gas Percentual: " + str(self.gasPercentual) + "%")
-                    print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
                     i = i + 1
 
             cv2.imshow("image", self.image)

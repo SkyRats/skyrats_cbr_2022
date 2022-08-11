@@ -21,18 +21,7 @@ class base:
 class fase2:
     def __init__(self, mav2):
         self.mav2 = mav2
-
-        self.bases_visited = 0
-        self.bases_stored = []   
-        self.ja_mapeada = False  
-        self.vel = 0.5
-
-        self.tube_found = False
-        self.fim_encontrado = False
-        self.cx_tube = self.cy_tube = self.tw = self.th = 0.0
-        self.rows = self.cols = 0
-
-        
+       
 
 
     #def precision_land(self):   

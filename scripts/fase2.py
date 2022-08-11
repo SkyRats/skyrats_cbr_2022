@@ -18,7 +18,7 @@ class base:
         self._name = name
         self._cordenates = [self.mav.drone_pose.pose.position.x, self.mav.drone_pose.pose.position.y, self.mav.drone_pose.pose.position.z]
 
-class fase1:
+class fase2:
     def __init__(self, mav2):
         self.mav2 = mav2
 

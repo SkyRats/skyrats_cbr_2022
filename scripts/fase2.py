@@ -68,11 +68,59 @@ class fase2:
 
 
     #def precision_land(self):   
-    def findSquare(self, mask_tube): 
+    def get_mask(hsv , lower_color , upper_color):
+    lower = np.array(lower_color)
+    upper = np.array(upper_color)
+    
+    mask = cv2.inRange(hsv , lower, upper)
 
-    def greenSquare(self, mask_tube): 
+    return mask
 
-    def redSquare(self, mask_tube): 
+def get_square_area(img):
+    min_area = 2000 #checar valor mais apropriado
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    thresh_img = cv2.threshold(gray_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
+    cnts = cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+    for cnt in cnts:
+        area = cv2.contourArea(cnt)
+        if area > min_area:
+            return area
+    return 0
+
+def getSquares (image):
+    lower_green = [29, 82, 83]
+    upper_green = [97, 184, 211]
+
+    lower_red = [0, 118, 144]
+    upper_red = [4, 227, 255]
+
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    green_mask = get_mask(hsv, lower_green, upper_green)
+    red_mask = get_mask(hsv, lower_red, upper_red)
+
+    
+    green_result = cv2.bitwise_and(image , image , mask= green_mask)
+    red_result = cv2.bitwise_and(image , image , mask= red_mask)
+    
+    #plotting
+    erode_size = 5
+    dilate_size = 5
+
+    erode_kernel = np.ones((erode_size, erode_size), np.float32)
+    dilate_kernel = np.ones((dilate_size, dilate_size), np.float32)
+    
+    green_result = cv2.dilate(green_result, dilate_kernel)
+    green_result = cv2.erode(green_result, erode_kernel)
+
+    red_result = cv2.dilate(red_result, dilate_kernel)
+    red_result = cv2.erode(red_result, erode_kernel)
+
+    
+
+    return (get_square_area(green_result), get_square_area(red_result)), green_result, red_result 
 
     def trajectory(self):
         self.mav2.takeoff(self.altura)

@@ -94,7 +94,7 @@ class fase4:
             deliverQrcode() #Colocar a máscara
             self.findQrcode()
 
-            if(found)
+            
 
             self.pickQrcode() #Colocar a máscara
 

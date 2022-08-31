@@ -8,6 +8,8 @@ class tuboDetection:
     
     def __init__(self):
         self.capture = cv2.VideoCapture(0)
+        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         self.tuboDetected = False
         self.fatorDeCorrecaoWidth =  0.9487
         self.fatorDeCorrecaoHeight = 0.6834
@@ -121,8 +123,8 @@ class tuboDetection:
 
         
     
-        if cv2.waitKey(20) & 0xFF == ord('q'):
-            return 1
+        #if cv2.waitKey(20) & 0xFF == ord('q'):
+        #    return 1
 
 
 

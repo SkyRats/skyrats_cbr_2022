@@ -82,9 +82,9 @@ class sensorDetection:
 
         (green_detected,red_detected), green_image, red_image = self.getSquares(self.frame)
 
-        cv2.imshow('Red', red_image)
-        cv2.imshow('Green', green_image)
-        cv2.imshow('Camera',self.frame)
+        #cv2.imshow('Red', red_image)
+        #cv2.imshow('Green', green_image)
+        #cv2.imshow('Camera',self.frame)
 
         #Updating Records
         self.greenRecord.pop(0)
@@ -108,8 +108,8 @@ class sensorDetection:
             self.redRecord = [ self.redSquaresCount for i in range(TOL)]
             sensor = "vermelho"
     
-        if cv2.waitKey(20) & 0xFF == ord('q'):
-            return 1
+        #if cv2.waitKey(20) & 0xFF == ord('q'):
+            #return 1
 
         return sensor
 
@@ -125,7 +125,6 @@ if __name__ == "__main__":
         if sensor == "verde":
             print("Sensor verde detectado")
         if sensor == "vermelho":
-            buz.ligar(3)
             print("Sensor vermelho detectado")
             
             

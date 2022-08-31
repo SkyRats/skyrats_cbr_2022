@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from baseDetector import CrossDetection
-import cv2
+#from baseDetector import CrossDetection
+#import cv2
 import rospy
 import numpy as np
 import time
@@ -29,30 +29,30 @@ class fase1:
 
     def land_known_base(self):
         self.mav.land()
-        time.sleep(10)
+        time.sleep(7)
         self.mav.takeoff(self.altitude) 
         rospy.sleep(7)
 
 
     def trajectory(self):
-        self.mav.takeoff(0.5)
-        rospy.sleep(7)
-        self.mav.change_auto_speed(self.vel_cruzeiro)
+        #self.mav.takeoff(0.5)
+        #rospy.sleep(7)
+        #self.mav.change_auto_speed(self.vel_cruzeiro)
         self.bases_stored.append(["0", 0, 0, INIT_HEIGHT])
         self.bases_visited += 1 
-        self.bases_stored.append(["A", -4.1, -0.6, 1.0])
+        self.bases_stored.append(["A", -4.05, -0.5, 1.0])
         self.bases_visited += 1 
-        self.bases_stored.append(["B", -5.75, 4.60, 1.0])
+        self.bases_stored.append(["B", -5.67, 4.75, 1.0])
         self.bases_visited += 1 
 
         #self.mav.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=2)
         ######### Base aerea 1 ################
-        self.mav.go_to_local(self.bases_stored[1][1], self.bases_stored[1][2], self.altitude, yaw=math.pi/2, sleep_time=16)
+        self.mav.go_to_local(self.bases_stored[1][1], self.bases_stored[1][2], self.altitude, yaw=math.pi/2, sleep_time=18)
         self.land_known_base()
         ######### fim base aerea 1 ################
 
         ######### Base area 2 ################
-        self.mav.go_to_local(self.bases_stored[2][1], self.bases_stored[2][2], self.altitude, yaw=math.pi/2, sleep_time=21)
+        self.mav.go_to_local(self.bases_stored[2][1], self.bases_stored[2][2], self.altitude, yaw=math.pi/2, sleep_time=23)
         self.land_known_base()
         ######### fim base aerea 1 ################ 
         self.mav.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=20)
@@ -61,8 +61,8 @@ class fase1:
 if __name__ == "__main__":
     rospy.init_node('fase1')
     mav = MAV2()
-    #from fase1_tubo import fase1_tubo
-    #missao_tubo = fase1_tubo(mav)
-    #missao_tubo.run()
+    from fase1_tubo import fase1_tubo
+    missao_tubo = fase1_tubo(mav)
+    missao_tubo.run()
     missao = fase1(mav)
     missao.trajectory()

@@ -187,9 +187,9 @@ class MAV2():
             self.goal_pose.pose.orientation.w] = quaternion_from_euler(0,0,yaw) #roll,pitch,yaw
             #print("X: " + str(self.goal_pose)))
 
-        while self.drone_state.mode != "OFFBOARD":
+        while self.drone_state.mode != "GUIDED":
             self.local_position_pub.publish(self.goal_pose)
-            self.set_mode("OFFBOARD")
+            self.set_mode("GUIDED")
         self.local_position_pub.publish(self.goal_pose)
 
     
@@ -240,14 +240,14 @@ class MAV2():
             rospy.loginfo("Vertical velocity parameter set to default")
 
     def set_vel(self, x, y, z, yaw = 0):
-        while self.drone_state.mode != "OFFBOARD":
+        while self.drone_state.mode != "GUIDED":
             self.goal_vel.twist.linear.x = float(x)
             self.goal_vel.twist.linear.y = float(y)
             self.goal_vel.twist.linear.z = float(z)
 
             self.goal_vel.twist.angular.z = float(yaw)
             self.velocity_pub.publish(self.goal_vel)  
-            self.set_mode("OFFBOARD")
+            self.set_mode("GUIDED")
 
         self.goal_vel.twist.linear.x = float(x)
         self.goal_vel.twist.linear.y = float(y)
@@ -259,13 +259,13 @@ class MAV2():
 
     def land(self, auto_disarm=True, speed=0.7, safety_on=True):
         rospy.loginfo("Landing...")
-        name_vel_z = 'MPC_Z_VEL_ALL'
-        self.set_param(name_vel_z, -3.0)
+        # name_vel_z = 'MPC_Z_VEL_ALL'
+        # self.set_param(name_vel_z, -3.0)
 
-        name_speed = 'MPC_LAND_SPEED'
-        self.set_param(name_speed, speed)
+        # name_speed = 'MPC_LAND_SPEED'
+        # self.set_param(name_speed, speed)
 
-        self.set_mode('AUTO.LAND')
+        self.set_mode('LAND')
 
         if safety_on:
             while self.drone_extended_state.landed_state != 4:
@@ -274,8 +274,8 @@ class MAV2():
                 self.rate.sleep()
         rospy.loginfo("Landing completed!")
 
-        if auto_disarm:
-            self.disarm()
+        # if auto_disarm:
+        #     self.disarm()
         
     ########## Arm #######
 

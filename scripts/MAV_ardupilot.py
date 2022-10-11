@@ -12,7 +12,6 @@ from geometry_msgs.msg import PoseStamped, TwistStamped
 from sensor_msgs.msg import BatteryState, NavSatFix, Image
 import numpy as np
 
-from cv_bridge import CvBridge 
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 import math
 
@@ -32,9 +31,6 @@ class MAV2():
         self.drone_extended_state = ExtendedState()
         self.battery = BatteryState()
         self.global_pose = NavSatFix()
-        self.cam = Image()
-        self.bridge_object = CvBridge()
-        self.camera_topic = "/camera/image_raw"
 
         ############# Services ##################
 
@@ -55,12 +51,8 @@ class MAV2():
         self.state_sub = rospy.Subscriber('/mavros/state', State, self.state_callback, queue_size=10) 
         self.battery_sub = rospy.Subscriber('/mavros/battery', BatteryState, self.battery_callback)
         self.extended_state_sub = rospy.Subscriber('/mavros/extended_state', ExtendedState, self.extended_state_callback, queue_size=2)        
-        self.cam_sub = rospy.Subscriber(self.camera_topic, Image, self.cam_callback, queue_size=2)        
-
         service_timeout = 15
         try:
-            rospy.wait_for_message('/mavros/extended_state', ExtendedState)
-            rospy.wait_for_service('mavros/param/get', service_timeout)
             rospy.wait_for_service('mavros/cmd/arming', service_timeout)
             rospy.wait_for_service('mavros/set_mode', service_timeout)
             rospy.loginfo("ROS services are up")
@@ -94,9 +86,6 @@ class MAV2():
     
     def local_callback(self, data):
         self.drone_pose = data
-
-    def cam_callback(self, cam_data):
-        self.cam = self.bridge_object.imgmsg_to_cv2(cam_data,"bgr8")
     
     
     ########## Battery verification ##########
@@ -302,23 +291,7 @@ class MAV2():
 if __name__ == '__main__':
     rospy.init_node('mavbase2')
     mav = MAV2()
-    #mav.set_mode("AUTO.LAND")
-    #mav.set_param("MIS_TAKEOFF_ALT", 2)
-    #mav.change_auto_speed(vel_xy = 2, vel_z = 1.5)
-    mav.takeoff(2)
-    #mav.go_to_local(0,0,3, yaw = -1.5708)
-    #mav.go_to_local(5,0,3)
-    #mav.go_to_local(0,0,3, yaw = 0)
-    #mav.go_to_local(5,0,3)
-    mav.go_to_local(0,0,3, yaw = 1.5708)
-    mav.go_to_local(5,0,3)
-    mav.go_to_local(0,0,3, yaw = 3.14)
-    mav.go_to_local(5,0,3)
-    mav.go_to_local(0,0,3, yaw = -3.14)
-    mav.go_to_local(5,0,3)
-
-
-    mav.land()
+    mav.disarm()
 
   
 

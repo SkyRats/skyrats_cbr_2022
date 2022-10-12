@@ -1,19 +1,13 @@
 #!/usr/bin/env python3
 
-from ast import Pass
-from cmath import nan
-from tkinter import SEL
-from turtle import position
 import rospy
 from mavros_msgs.srv import SetMode, CommandBool, CommandTOL, ParamSet
-from mavros_msgs.srv import CommandTOLRequest, CommandLongRequest, CommandBoolRequest
-from mavros_msgs.msg import State, ExtendedState, PositionTarget, ParamValue
+from mavros_msgs.srv import CommandTOLRequest, CommandLongRequest, CommandLong, CommandBoolRequest
+from mavros_msgs.msg import State, ExtendedState, ParamValue
 
 from geometry_msgs.msg import PoseStamped, TwistStamped
-from sensor_msgs.msg import BatteryState, NavSatFix, Image
 import numpy as np
 
-from cv_bridge import CvBridge 
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 import math
 
@@ -31,11 +25,6 @@ class MAV2():
         self.goal_vel = TwistStamped()
         self.drone_state = State()
         self.drone_extended_state = ExtendedState()
-        self.battery = BatteryState()
-        self.global_pose = NavSatFix()
-        self.cam = Image()
-        self.bridge_object = CvBridge()
-        self.camera_topic = "/camera/image_raw"
 
         ############# Services ##################
 
@@ -44,38 +33,32 @@ class MAV2():
         self.takeoff_srv = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
         self.set_mode_srv = rospy.ServiceProxy('mavros/set_mode', SetMode)
         self.param_set_srv = rospy.ServiceProxy('/mavros/param/set', ParamSet)
-        self.takeoff_srv = rospy.ServiceProxy('/mavros_msgs/CommandTOL', CommandTOL)
-   
+        self.command_client = rospy.ServiceProxy("mavros/cmd/command", CommandLong)
 
     
         ############### Publishers ##############
         self.local_position_pub = rospy.Publisher('/mavros/setpoint_position/local', PoseStamped, queue_size = 20)
         self.velocity_pub = rospy.Publisher('/mavros/setpoint_velocity/cmd_vel',  TwistStamped, queue_size=5)
-        self.target_pub = rospy.Publisher('/mavros/setpoint_raw/local', PositionTarget, queue_size=5)
 
         ########## Subscribers ##################
         self.local_atual = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.local_callback)
         self.state_sub = rospy.Subscriber('/mavros/state', State, self.state_callback, queue_size=10) 
-        self.battery_sub = rospy.Subscriber('/mavros/battery', BatteryState, self.battery_callback)
         self.extended_state_sub = rospy.Subscriber('/mavros/extended_state', ExtendedState, self.extended_state_callback, queue_size=2)        
-        self.cam_sub = rospy.Subscriber(self.camera_topic, Image, self.cam_callback, queue_size=2)        
-
+    
         service_timeout = 15
         try:
-            rospy.wait_for_message('/mavros/extended_state', ExtendedState)
-            rospy.wait_for_service('mavros/param/get', service_timeout)
             rospy.wait_for_service('mavros/cmd/arming', service_timeout)
             rospy.wait_for_service('mavros/set_mode', service_timeout)
             rospy.loginfo("ROS services are up")
         except rospy.ROSException:
             rospy.logerr("failed to connect to services")
 
-        rospy.logerr("Services are up")
+        rospy.loginfo("Services are up")
         
 
         while self.drone_state.mode == "":
             pass
-        rospy.logerr("Subscribers are up")
+        rospy.loginfo("Subscribers are up")
        
     ########## Callback functions ###########
     
@@ -90,32 +73,15 @@ class MAV2():
         #uint8 LANDED_STATE_IN_AIR = 2
         #uint8 LANDED_STATE_TAKEOFF = 3
         #uint8 LANDED_STATE_LANDING = 4
-
-    def battery_callback (self, battery_data):
-        self.battery = battery_data
     
     def local_callback(self, data):
         self.drone_pose = data
-
-    def cam_callback(self, cam_data):
-        self.cam = self.bridge_object.imgmsg_to_cv2(cam_data,"bgr8")
-    
-    
-    ########## Battery verification ##########
-    def verify_battery(self):
-        percentage = self.battery.percentage
-        rospy.logerr("Waiting for battery topic...")
-        while percentage == 0 and self.battery.voltage == 0:
-            pass
-        rospy.logerr("Battery percentage is: " + str(percentage))
-        rospy.logerr("Battery voltage is: " + str(self.battery.voltage))
-
 
     ###Set mode: PX4 mode - string, timeout (seconds) - int
     def set_mode(self, mode):
         rospy.loginfo("setting FCU mode: {0}".format(mode))
         service_timeout = 15
-        rospy.wait_for_service('mavros/set_mode', service_timeout)
+        rospy.wait_for_service('/mavros/set_mode', service_timeout)
         while (self.drone_state.mode != mode ):        
             self.set_mode_srv(0, mode)
             
@@ -124,45 +90,17 @@ class MAV2():
         rospy.wait_for_service('/mavros/param/set', service_timeout)
         a = ParamValue()
         a.real = param_value        
-        self.param_set_srv(param_name, a)
+        response = self.param_set_srv(param_name, a)
+        return response.success
 
-    '''def takeoff(self, height):
- 
+    def takeoff(self, height):
+        rospy.loginfo("TAKING OFF...")
+        self.set_mode("GUIDED")
         self.arm()
-        
-        rospy.loginfo("Takeoff")
-
-        self.go_to_local(0,0,height)
-
-
-
-    '''
-    def takeoff(self, height, speed=1.5, safety_on=True):
-    
-        # name_alt= 'MIS_TAKEOFF_ALT'
-        # self.set_param(name_alt, float(height))
-        
-        # name_vel_z = 'MPC_Z_VEL_ALL'
-        # self.set_param(name_vel_z, -3.0)
-
-        # name_speed = 'MPC_TKO_SPEED'
-        # self.set_param(name_speed, speed)
-        
-
-        #if self.drone_extended_state.landed_state != 1:
-        #    rospy.logerr("Drone is not grounded! Takeoff cancelled")
-        #    return
-        self.arm()
-        
-        # self.set_mode("AUTO.TAKEOFF")
-        
-        # if safety_on:
-        #     while self.drone_state.mode != "AUTO.TAKEOFF":
-        #         pass
-        #     while self.drone_state.mode == "AUTO.TAKEOFF":
-        #         pass
-
         msg = CommandTOLRequest(0, 0, 0, 0, height)
+        rospy.wait_for_service('/mavros/cmd/takeoff', 10)
+
+        rospy.sleep(1)
         response = self.takeoff_srv(msg)
         
         if response.success:
@@ -230,23 +168,10 @@ class MAV2():
         rospy.loginfo("Arrived at requested position")
 
     
-    def change_auto_speed(self, vel_xy = None, vel_z = None):
-        if vel_xy != None:
-            name_vel_xy = 'MPC_XY_VEL_MAX'
-            self.set_param(name_vel_xy, vel_xy)
-            rospy.loginfo("Horizontal velocity parameter set to " +str(vel_xy))
-        else:
-            name_xy_max = 'MPC_XY_VEL_MAX'
-            self.set_param(name_xy_max,12.0)
-            rospy.loginfo("Horizontal velocity parameter set to default")
-        if vel_z != None:
-            name_vel_z = 'MPC_Z_VEL_ALL'
-            self.set_param(name_vel_z, vel_z)
-            rospy.loginfo("Vertical velocity parameter set to " +str(vel_z))
-        else:
-            name_z_max = 'MPC_Z_VEL_ALL'
-            self.set_param(name_z_max, -3.0)
-            rospy.loginfo("Vertical velocity parameter set to default")
+    def change_auto_speed(self, guided_vel): # Velocity of guided mode in m/s
+        rospy.loginfo("Changing speed to " + str(guided_vel))
+        return self.set_param('WPNAV_SPEED', float(guided_vel*100))
+
 
     def set_vel(self, x, y, z, yaw = 0):
         while self.drone_state.mode != "GUIDED":
@@ -321,7 +246,11 @@ class MAV2():
 if __name__ == '__main__':
     rospy.init_node('mavbase2')
     mav = MAV2()
-    mav.disarm()
+    mav.takeoff(10)
+    rospy.sleep(5)
+    mav.change_auto_speed(1)
+    mav.go_to_local(0,0,5)
+    mav.land()
 
   
 

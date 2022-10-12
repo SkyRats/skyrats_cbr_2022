@@ -67,16 +67,21 @@ class fase4:
     def trajectory(self):
         self.mav2.takeoff(3)
 
+        #Armazenar qual é a base mais próxima que ainda não possui pacote correto
         nearestBase = self.getNearestBaseWithoutCorrectPackage()
 
+        #Se existir, colocá-la como próximo destino e ir até ela
         while(not nearestBase == None):
             self.destination = nearestBase
 
             while(not self.destination == None):
                 self.mav2.go_to_local(self.destination._coordinates[0], self.destination._coordinates[1], self.destination._coordinates[2])
 
+                #Tentar encontrar um pacote nesta base
                 foundPackage = self.findQrcode()
 
+                #Se for encontrado e o drone já estiver carregando um pacote, trocar os pacotes
+                #(A única hipótese em que o drone vai para uma base carregando um pacote é quando essa base é o destino desse pacote)
                 if(not foundPackage == None):
                     if(not self.pickedPackage == None):
                         for i in range(len(self.bases)):
@@ -84,16 +89,20 @@ class fase4:
                                 self.bases[i]._package = self.pickedPackage
                                 
                         self.pickedPackage = foundPackage
+
+                    #Se o drone não estiver carregando um pacote, simplesmente pegar o pacote encontrado e deixar a base sem pacotes
                     else:
                         self.pickedPackage = foundPackage
                         for i in range(len(self.bases)):
                             if (self.destination._name == self.bases[i]._name):
                                 self.bases[i]._package = None
 
+                    #Definir o próximo destino do drone como o destino do pacote sendo carregado
                     for i in range(len(self.bases)):
                         if (self.pickedPackage == self.bases[i]._name):
                             self.destination = self.bases[i]
 
+                #Se não for encontrado nenhum pacote, é porque a base estava vazia. Se o drone estiver carregando um pacote, esse é o último destino
                 else:
                     if(not self.pickedPackage == None):
                         for i in range(len(self.bases)):
@@ -104,8 +113,11 @@ class fase4:
                         
                     self.destination = None
 
+            #Se o drone não possuir um destino, armazenar a base mais próxima que ainda não possui pacote correto
+            #Executar esse loop até que não haja mais bases sem pacote correto
             nearestBase = self.getNearestBaseWithoutCorrectPackage()
 
+        #Terminada a missão, voltar para a base costeira
         print("Finished!")
         self.mav2.go_to_local(self.coastBase._coordinates[0], self.coastBase._coordinates[1], self.coastBase._coordinates[2])
 

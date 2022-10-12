@@ -60,12 +60,9 @@ class fase4:
                     nearestBase = base
 
         return nearestBase
-
-    def deliverQrcode(self, mask_tube): 
-
-    def pickQrcode(self, mask_tube): 
     
     def findQrcode(self):
+        return None #Esta função deve retornar o destino do pacote!
        
     def trajectory(self):
         self.mav2.takeoff(3)
@@ -78,13 +75,10 @@ class fase4:
             while(not self.destination == None):
                 self.mav2.go_to_local(self.destination._coordinates[0], self.destination._coordinates[1], self.destination._coordinates[2])
 
-                self.findQrcode()
-                self.pickQrcode() #Colocar a máscara
-                foundPackage = #Obter o pacote
+                foundPackage = self.findQrcode()
 
                 if(not foundPackage == None):
                     if(not self.pickedPackage == None):
-                        self.deliverQrcode()
                         for i in range(len(self.bases)):
                             if (self.destination._name == self.bases[i]._name):
                                 self.bases[i]._package = self.pickedPackage
@@ -102,7 +96,6 @@ class fase4:
 
                 else:
                     if(not self.pickedPackage == None):
-                        self.deliverQrcode()
                         for i in range(len(self.bases)):
                             if (self.destination._name == self.bases[i]._name):
                                 self.bases[i]._package = self.pickedPackage

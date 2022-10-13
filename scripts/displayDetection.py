@@ -6,12 +6,13 @@ import easyocr
 import time
 from statistics import mode
 from defisheye import Defisheye
+from imutils.perspective import four_point_transform
 
 class displayDetection:
     
     def __init__(self):
 
-        self.cap = cv2.VideoCapture(2)
+        self.cap = cv2.VideoCapture('/home/renato/skyrats_ws2/src/skyrats_cbr_2022/images/drone.mp4')
 
         self.squares = []
         self.gas_percentual_list = []
@@ -20,6 +21,19 @@ class displayDetection:
         self.gas_percentual_image = []
         self.gas_percentual = []
         self.zero_adjustment = []
+    
+
+    def find_potentials(self, contours):
+        
+        shapes = []
+
+        for contour in contours:
+            approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
+            
+            if len(approx) == 4 and cv2.arcLength(contour,True) > 200:
+                shapes.append(approx)
+        
+        return shapes
     
     def find_squares(self, contours):
 
@@ -33,26 +47,53 @@ class displayDetection:
                 x, y, w, h = cv2.boundingRect(approx)
                 aspectRatio = float(w) / h
 
-                if aspectRatio >= 0.95 and aspectRatio < 1.1 and cv2.contourArea(contour) > 1000:
+
+                if aspectRatio >= 0.95 and aspectRatio < 1.1 and cv2.contourArea(contour) > 3000:
+
+                    self.reshape = True
+                    self.reshaped_image = four_point_transform(self.image, approx.reshape(4,2)) 
+                    cv2.imshow("reshape", self.reshaped_image)
+                    #self.squares.append(contour)
+                    #cv2.drawContours(self.image, [approx], 0, (255, 0, 0), 4)
+                    #cv2.rectangle(self.image,(x,y),(x+y, y+h), (0,255,0),2)
+
+    def find_reshaped_square(self):
+
+        gray = cv2.cvtColor(self.reshaped_image, cv2.COLOR_BGR2GRAY)
+        ret, thresh = cv2.threshold(gray, 140, 255, cv2.CHAIN_APPROX_NONE)
+        contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
+        for contour in contours:
+            approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
+
+            if len(approx) == 4:
+                x, y, w, h = cv2.boundingRect(approx)
+                aspectRatio = float(w) / h
+
+
+                if aspectRatio >= 0.95 and aspectRatio < 1.1 and cv2.contourArea(contour) > 3000:
+
                     self.squares.append(contour)
-                    # cv2.drawContours(self.image, [approx], 0, (255, 0, 0), 4)
-                    cv2.rectangle(self.image,(x,y),(x+y, y+h), (0,255,0),2)
+                    cv2.drawContours(self.reshaped_image, [approx], 0, (255, 0, 0), 4)
 
-    def crop_image(self, mask):
+                
 
-        x = np.where(mask > 0)[0]
-        y = np.where(mask > 0)[1]
+
+    def crop_image(self):
+
+        x = np.where(self.reshaped_image > 0)[0]
+        y = np.where(self.reshaped_image > 0)[1]
         x1 = np.min(x)
         x2 = np.max(x)
         y1 = np.min(y)
         y2 = np.max(y)
 
-        image_copy = self.image.copy()
+        image_copy = self.reshaped_image.copy()
         cropped_image = image_copy[x1:x2, y1:y2]
-
+        
         #crop the top side of the image (gas percentual)
         cropped_image1 = cropped_image[round(cropped_image.shape[0]*0.05):round(cropped_image.shape[0]/2), round(cropped_image.shape[1]*0.08):round(cropped_image.shape[1]*0.63)]
-
+        cv2.imshow("crop", cropped_image1)
         #crop the bottom side of the image (gas percentual)
         cropped_image2 = cropped_image[round(cropped_image.shape[0]/2):round(cropped_image.shape[0]*0.95), round(cropped_image.shape[1]*0.07):round(cropped_image.shape[1]*0.63)]
 
@@ -72,8 +113,8 @@ class displayDetection:
         #crop the image that may contain "-" or not
         cropped_image7 = cropped_image2[round(cropped_image2.shape[0]*0.35):round(cropped_image2.shape[0]*0.55), round(cropped_image2.shape[1]*0.1):round(cropped_image2.shape[1]*0.40)]
 
-        cv2.imshow("minus", cropped_image7)
-        cv2.imshow("one", cropped_image6)
+        #cv2.imshow("minus", cropped_image7)
+        #cv2.imshow("one", cropped_image6)
         
         #append the numbers images in their lists
 
@@ -90,7 +131,7 @@ class displayDetection:
     def OCR(self, image, index):
 
         result = self.reader.readtext(image)
-        print(result)
+        #print(result)
         # print(number)
 
         if result:
@@ -130,7 +171,7 @@ class displayDetection:
 
     def detection_loop(self):
         i = 0
-
+        self.reshape = False
         while self.cap.isOpened() and i<100:
 
             self.squares = []
@@ -150,6 +191,9 @@ class displayDetection:
             # self.image = cv2.resize(self.image, (1280,720))
             kernel = np.ones((3, 3), np.uint8)
             self.image = cv2.dilate(self.image, kernel)
+            self.image = cv2.blur(self.image, (3,3))
+            canny = cv2.Canny(self.image,100,200)
+            #cv2.imshow("canny", canny)
             gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
             ret, thresh = cv2.threshold(gray, 140, 255, cv2.CHAIN_APPROX_NONE)
             cv2.imshow("thresh", thresh)
@@ -157,22 +201,25 @@ class displayDetection:
             contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
             self.find_squares(contours)
 
+            if self.reshape:
+                self.find_reshaped_square()
+
             if len(self.squares)>0:
 
 
                 sorted_squares = sorted(self.squares, key = cv2.contourArea, reverse = True )
-                mask = np.zeros(self.image.shape, np.uint8)
-                cv2.drawContours(mask, [sorted_squares[0]], 0, (0,0, 255), -1, )
+                #mask = np.zeros(self.image.shape, np.uint8)
+                #cv2.drawContours(mask, [sorted_squares[0]], 0, (0,0, 255), -1, )
                 #cv2.drawContours(self.image, [sorted_squares[0]], 0, (0,0, 255), -1, )
-                cv2.imshow("mask", mask)
+                #cv2.imshow("mask", mask)
 
-                
+                self.crop_image()
 
 
                 if(i < 100):
                     
                     #apply the OCR algorithm over the numbers images
-                    self.crop_image(mask)
+                    
                     self.gas_percentual = [0,0]
                     self.zero_adjustment = 0
 
@@ -192,6 +239,7 @@ class displayDetection:
                             # print("Gas Percentual: " + str(self.gasPercentual) + "%")
                     
                     if self.zero_adjustment and self.checkInt(self.zero_adjustment):
+
                         if(self.OCR(self.zero_adjustment_image,2) > 0.98):  
 
                             if one:
@@ -202,7 +250,7 @@ class displayDetection:
 
                             self.zero_adjustment_list.append(self.zero_adjustment)
 
-                            print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
+                            #print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
                         
                     
                     i = i + 1
@@ -212,9 +260,12 @@ class displayDetection:
             if cv2.waitKey(5) & 0xFF == 27:
                 break
         if(len(self.gas_percentual_list)!=0):
+
             self.gasPercentual=mode(self.gas_percentual_list)
             print("Gas Percentual: " + str(self.gasPercentual) + "%")
+
         if(len(self.zero_adjustment_list)!=0):
+
             self.zero_adjustment=mode(self.zero_adjustment_list)
             print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
 

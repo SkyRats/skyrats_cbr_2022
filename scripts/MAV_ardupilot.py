@@ -76,7 +76,19 @@ class MAV2():
     
     def local_callback(self, data):
         self.drone_pose = data
-
+    
+    def wait4start(self):
+        rospy.loginfo("Waiting for user to set mode to GUIDED...")
+        while not rospy.is_shutdown() and self.drone_state.mode != "GUIDED":
+            rospy.sleep(0.01)
+        else:
+            if self.drone_state.mode == "GUIDED":
+                rospy.loginfo("Mode set to GUIDED. Starting Mission...")
+                return
+            else:
+                rospy.logerr("Error starting mission!")
+                return
+            
     ###Set mode: PX4 mode - string, timeout (seconds) - int
     def set_mode(self, mode):
         rospy.loginfo("setting FCU mode: {0}".format(mode))

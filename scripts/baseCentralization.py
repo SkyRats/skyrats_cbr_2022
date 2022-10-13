@@ -16,10 +16,10 @@ def centralize_on_cross(drone):
 
     detection = CrossDetection()
 
+    TARGET = (int(drone.cam.shape[1]/2), int(drone.cam.shape[0]/2))
+
     is_centralized = False
     while not is_centralized:
-
-        self.TARGET = (int(drone.cam.shape[0]/2), int(drone.cam.shape[1]/2))
         
         # Loop over frames to search for markers
         # If no markers were found, tries to shake the drone
@@ -30,8 +30,10 @@ def centralize_on_cross(drone):
         while not cross_detected:
             rclpy.spin_once(drone)
             
+            parameters = [[0, 0, 0], [255, 255, 255], [0, 0, 0]]
+
             frame = drone.cam
-            list_of_bases = detection.base_detection(frame)
+            list_of_bases = detection.base_detection(frame, parameters)
 
             if len(list_of_bases) > 0:
                 cross_detected = True
@@ -39,7 +41,7 @@ def centralize_on_cross(drone):
 
             if timer > 1000:
                 print("No visible bases, shaking drone...")
-                drone.shake()
+                # drone.shake()
                 timer = 0
                 no_detection += 1
 
@@ -52,16 +54,16 @@ def centralize_on_cross(drone):
         base = list_of_bases[0]
 
         # Calculate the PID errors
-        delta_x = self.TARGET[0] - base[0]
-        delta_y = self.TARGET[1] - base[1]
+        delta_y = TARGET[0] - base[0]
+        delta_x = TARGET[1] - base[1]
 
         # Adjust velocity
-        drone.camera_pid(delta_x, delta_y)
+        drone.camera_pid(delta_x, delta_y, 0)
 
         # End centralization if the marker is close enough to the camera center
-        if ((delta_x)**2 + (delta_y)**2)**0.5 < 30:
+        if ((delta_x)**2 + (delta_y)**2)**0.5 < 40:
             drone.set_vel(0, 0, 0)
             is_centralized = True
             print(f"Centralized! x: {delta_x} y: {delta_y}")
                 
-        return
+            return

@@ -220,9 +220,13 @@ class CrossDetection:
 
 
 if __name__ == '__main__':
+    import psutil
 
     # If you don't want video feedback -> False:
     DEBUG = True
+    
+    # For cpu benchmark analysis:
+    BENCHMARK = True
     
     detection = CrossDetection()
 
@@ -239,10 +243,19 @@ if __name__ == '__main__':
         parameters = detection.calibration(vs, initial)
     else:
         parameters = initial
-
+    
+    i = 0
+    cpu_usage = 0
+    
     while True:
         frame = vs.read()
         list_of_bases = detection.base_detection(frame, parameters)
+        
+        if BENCHMARK:
+            cpu_usage += psutil.cpu_percent()
+            i += 1
+            if i > 1000:
+                break
 
         if DEBUG:
             for pixel in list_of_bases:
@@ -255,3 +268,5 @@ if __name__ == '__main__':
                 break
         else:
             print(list_of_bases)
+    
+    print(f"CPU usage: {round(cpu_usage/i, 1)}%")

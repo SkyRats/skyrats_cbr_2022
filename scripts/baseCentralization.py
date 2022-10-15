@@ -67,3 +67,16 @@ def centralize_on_cross(drone):
             print(f"Centralized! x: {delta_x} y: {delta_y}")
                 
             return
+        
+        
+if __name__ == '__main__':
+
+    import sys
+    import os
+    sys.path.insert(0,'/home/' + os.environ["USER"] + '/skyrats_ws2/src/mavbase2')
+    from MAV2 import MAV2
+
+    rclpy.init(args=sys.argv)
+    mav = MAV2()
+
+    centralize_on_cross(mav)

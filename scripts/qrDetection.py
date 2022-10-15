@@ -67,7 +67,7 @@ class QRDetection():
     def qrtest(self, cam_id): 
         cam = cv2.VideoCapture(cam_id)
         # changing camera resolution for better processing
-        cam.set(cv2.CAP_PROP_FRAME_WIDTH, 620)
+        cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         self.detection = True
         self.qr_debug = True

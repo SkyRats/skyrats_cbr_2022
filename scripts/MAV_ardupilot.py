@@ -95,7 +95,8 @@ class MAV2():
         service_timeout = 15
         rospy.wait_for_service('/mavros/set_mode', service_timeout)
         while (self.drone_state.mode != mode ):        
-            self.set_mode_srv(0, mode)
+            response = self.set_mode_srv(0, mode)
+        return response
             
     def set_param(self, param_name, param_value):
         service_timeout = 15
@@ -109,11 +110,10 @@ class MAV2():
         rospy.loginfo("TAKING OFF...")
         self.set_mode("GUIDED")
         self.arm()
-        msg = CommandTOLRequest(0, 0, 0, 0, height)
         rospy.wait_for_service('/mavros/cmd/takeoff', 10)
 
         rospy.sleep(1)
-        response = self.takeoff_srv(msg)
+        response = self.takeoff_srv(altitude=height)
         
         if response.success:
             rospy.loginfo("Takeoff completed!")
@@ -175,8 +175,6 @@ class MAV2():
                 yaw_diff = yaw - current_yaw
             else:
                 yaw_diff = yaw + current_yaw
-            if yaw_diff > 3:
-                print("deu merda familia")
         rospy.loginfo("Arrived at requested position")
 
     
@@ -203,35 +201,11 @@ class MAV2():
         self.velocity_pub.publish(self.goal_vel)    
 
 
-    def land(self, auto_disarm=True, speed=0.7, safety_on=True):
+    def land(self):
         rospy.loginfo("Landing...")
-        # name_vel_z = 'MPC_Z_VEL_ALL'
-        # self.set_param(name_vel_z, -3.0)
 
-        # name_speed = 'MPC_LAND_SPEED'
-        # self.set_param(name_speed, speed)
-
-        # self.set_mode('LAND')
-
-        land_msg = CommandTOLRequest(0, 0, 0, 0, 0)
-        response = self.land_srv(land_msg)
-        if response.success:
-            rospy.loginfo("Landing completed!")
-            return 
-        else:
-            rospy.loginfo("Landing failed!")
-            return
-
-        # if safety_on:
-        #     while self.drone_extended_state.landed_state != 4:
-        #         self.rate.sleep()
-        #     while self.drone_extended_state.landed_state == 4:
-        #         self.rate.sleep()
-        # rospy.loginfo("Landing completed!")
-
-        # if auto_disarm:
-        #     self.disarm()
-        
+        response = self.set_mode('LAND')
+        return response
     ########## Arm #######
 
     def arm(self):
@@ -240,8 +214,9 @@ class MAV2():
         rospy.wait_for_service('mavros/cmd/arming', service_timeout)
         self.arm_srv(True)
         while not self.drone_state.armed:
-            self.arm_srv(True)
+            response = self.arm_srv(True)
         rospy.loginfo('Drone is armed')
+        return response
         
 
     ########## Disarm ########
@@ -251,8 +226,8 @@ class MAV2():
         rospy.loginfo('DISARMING MAV')
         rospy.wait_for_service('mavros/cmd/arming', service_timeout)
         self.arm_srv(False)
-        while not self.drone_state.armed:
-            self.arm_srv(False)
+        while self.drone_state.armed:
+            response = self.arm_srv(False)
         rospy.loginfo('Drone is disarmed')
         
         
@@ -290,9 +265,11 @@ if __name__ == '__main__':
     rospy.init_node('mavbase2')
     mav = MAV2()
     mav.takeoff(10)
-    rospy.sleep(5)
-    mav.change_auto_speed(1)
-    mav.go_to_local(0,0,5)
+    rospy.sleep(30)
+    mav.change_auto_speed(10)
+    mav.go_to_local(0,0,5, yaw=0)
+    mav.go_to_local(0,0,5, yaw=1.57)
+    mav.go_to_local(5,0,5)
     mav.land()
 
   

@@ -20,7 +20,7 @@ class sensorDetection:
 
     def get_square_area(self,img):
         squaresDetected = []
-        min_area = 2000 #checar valor mais apropriado
+        min_area = 400 #checar valor mais apropriado
     
         contours,junk=cv2.findContours(img,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
         #cv2.drawContours(frame,contours,-1,(255,0,0),3)

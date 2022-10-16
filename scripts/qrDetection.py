@@ -71,7 +71,7 @@ class QRDetection():
 
             # cleanup
             cv2.destroyAllWindows()
-            #return self.qr_data # qr_result is a list with qr infos from all readings 
+            return self.qr_data # qr_result is a list with qr infos from all readings 
 
 
     def qrtest(self, cam_id): 

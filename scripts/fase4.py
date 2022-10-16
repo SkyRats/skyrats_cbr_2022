@@ -42,7 +42,7 @@ class fase4:
         dist_menor=8*(2**(1/2))
         qtdade_bases_visited = 0
 
-        self.bases_not_visited.append([-2.5, 0.5, 1])
+        self.bases_not_visited.append([-2.5, 0, 1])
         self.bases_not_visited.append([-4, 2, 0])
         self.bases_not_visited.append([-6, 0, 0])
         self.bases_not_visited.append([-2, 5, 0])
@@ -69,7 +69,7 @@ class fase4:
             self.mav2.go_to_local(self.bases_not_visited[i_oficial][0],self.bases_not_visited[i_oficial][1], 2)
             self.mav2.go_to_local(self.bases_not_visited[i_oficial][0],self.bases_not_visited[i_oficial][1], self.bases_not_visited[i_oficial][2] + 0.5)
             qr_result = self.detection.qrdetection(self.mav2.cam)
-            self.mav2.get_logger().warn(str(qr_result))
+            self.mav2.get_logger().warn("QR data: " + str(qr_result))
             if not self.detection.detected:
                 self.mav2.get_logger().warn("Trying to detect again...")
                 self.mav2.go_to_local(self.mav2.drone_pose.pose.position.x, self.mav2.drone_pose.pose.position.y, self.mav2.drone_pose.pose.position.z + 0.2, 0, 0.1)

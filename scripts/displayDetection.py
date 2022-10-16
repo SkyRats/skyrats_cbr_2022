@@ -1,4 +1,3 @@
-
 from email.mime import image
 import cv2
 import numpy as np
@@ -52,7 +51,7 @@ class displayDetection:
 
                     self.reshape = True
                     self.reshaped_image = four_point_transform(self.image, approx.reshape(4,2)) 
-                    cv2.imshow("reshape", self.reshaped_image)
+                    #cv2.imshow("reshape", self.reshaped_image)
                     #self.squares.append(contour)
                     #cv2.drawContours(self.image, [approx], 0, (255, 0, 0), 4)
                     #cv2.rectangle(self.image,(x,y),(x+y, y+h), (0,255,0),2)
@@ -93,7 +92,7 @@ class displayDetection:
         
         #crop the top side of the image (gas percentual)
         cropped_image1 = cropped_image[round(cropped_image.shape[0]*0.05):round(cropped_image.shape[0]/2), round(cropped_image.shape[1]*0.08):round(cropped_image.shape[1]*0.63)]
-        cv2.imshow("crop", cropped_image1)
+        #cv2.imshow("crop", cropped_image1)
         #crop the bottom side of the image (gas percentual)
         cropped_image2 = cropped_image[round(cropped_image.shape[0]/2):round(cropped_image.shape[0]*0.95), round(cropped_image.shape[1]*0.07):round(cropped_image.shape[1]*0.63)]
 
@@ -111,7 +110,7 @@ class displayDetection:
         cropped_image6 = cropped_image2[0:round(cropped_image2.shape[0]*0.90), round(cropped_image2.shape[1]*0.40):round(cropped_image2.shape[1]*0.51)]
 
         #crop the image that may contain "-" or not
-        cropped_image7 = cropped_image2[round(cropped_image2.shape[0]*0.35):round(cropped_image2.shape[0]*0.55), round(cropped_image2.shape[1]*0.1):round(cropped_image2.shape[1]*0.40)]
+        cropped_image7 = cropped_image2[round(cropped_image2.shape[0]*0.43):round(cropped_image2.shape[0]*0.57), round(cropped_image2.shape[1]*0.055):round(cropped_image2.shape[1]*0.36)]
 
         #cv2.imshow("minus", cropped_image7)
         #cv2.imshow("one", cropped_image6)
@@ -128,20 +127,28 @@ class displayDetection:
 
         
     #Optical Character Recognition
-    def OCR(self, image, index):
+    def OCR(self, image):
 
         result = self.reader.readtext(image)
-        #print(result)
+        print(result)
         # print(number)
 
         if result:
-            # if(self.checkInt(result[0][1]) and self.checkInt(result[1])):
-            #     print("ok")
-                
-                return result[0][index]
 
-        else: 
-            return False
+            content = result[0][1]
+            accuracy = result[0][2]
+
+            if accuracy > 0.85 and self.checkInt(content):
+                
+                return [content, accuracy]
+
+            else: 
+
+                return [False, False]
+
+        else:
+
+            return [False, False]
 
     def checkInt(self,str):
         try:
@@ -191,12 +198,12 @@ class displayDetection:
             # self.image = cv2.resize(self.image, (1280,720))
             kernel = np.ones((3, 3), np.uint8)
             self.image = cv2.dilate(self.image, kernel)
-            self.image = cv2.blur(self.image, (3,3))
-            canny = cv2.Canny(self.image,100,200)
+            self.image = cv2.erode(self.image, kernel)
+            #canny = cv2.Canny(self.image,100,200)
             #cv2.imshow("canny", canny)
             gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
             ret, thresh = cv2.threshold(gray, 140, 255, cv2.CHAIN_APPROX_NONE)
-            cv2.imshow("thresh", thresh)
+            #cv2.imshow("thresh", thresh)
 
             contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
             self.find_squares(contours)
@@ -204,7 +211,7 @@ class displayDetection:
             if self.reshape:
                 self.find_reshaped_square()
 
-            if len(self.squares)>0:
+            if self.squares:
 
 
                 sorted_squares = sorted(self.squares, key = cv2.contourArea, reverse = True )
@@ -216,58 +223,63 @@ class displayDetection:
                 self.crop_image()
 
 
-                if(i < 100):
+                if(i < 20):
                     
                     #apply the OCR algorithm over the numbers images
                     
                     self.gas_percentual = [0,0]
                     self.zero_adjustment = 0
 
-                    self.gas_percentual = [self.OCR(self.gas_percentual_image[0],1), self.OCR(self.gas_percentual_image[1],1)]                 
-                    self.zero_adjustment = self.OCR(self.zero_adjustment_image,1)
+                    self.gas_percentual = [self.OCR(self.gas_percentual_image[0])[0], self.OCR(self.gas_percentual_image[1])[0]]                 
+                    self.zero_adjustment = self.OCR(self.zero_adjustment_image)[0]
 
                     one = self.isEmpty(self.one_image, 0.2)
                     minus = self.isEmpty(self.minus_image, 0.2)
 
 
-                    if (self.gas_percentual[0] and self.gas_percentual[1]) and self.checkInt(self.gas_percentual[0]) and self.checkInt(self.gas_percentual[1]):
-                        if(self.OCR(self.gas_percentual_image[0],2) > 0.98 and self.OCR(self.gas_percentual_image[1],2)>0.98):
+                    if self.gas_percentual[0] and self.gas_percentual[1]:
+                                               
+                        self.gasPercentual = int(str(self.gas_percentual[0]) + str(self.gas_percentual[1]))
+                        self.gas_percentual_list.append(self.gasPercentual)
+                        # print("Gas Percentual: " + str(self.gasPercentual) + "%")
+                    
+                    if self.zero_adjustment:
 
                         
-                            self.gasPercentual = int(str(self.gas_percentual[0]) + str(self.gas_percentual[1]))
-                            self.gas_percentual_list.append(self.gasPercentual)
-                            # print("Gas Percentual: " + str(self.gasPercentual) + "%")
-                    
-                    if self.zero_adjustment and self.checkInt(self.zero_adjustment):
 
-                        if(self.OCR(self.zero_adjustment_image,2) > 0.98):  
+                        if one:
+                            self.zero_adjustment = int(self.zero_adjustment) + 10
 
-                            if one:
-                                self.zero_adjustment = int(self.zero_adjustment) + 10
+                        if minus:
+                            self.zero_adjustment = int(self.zero_adjustment)*-1
 
-                            if minus:
-                                self.zero_adjustment = int(self.zero_adjustment)*-1
+                        self.zero_adjustment_list.append(self.zero_adjustment)
 
-                            self.zero_adjustment_list.append(self.zero_adjustment)
-
-                            #print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
+                        #print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
                         
                     
                     i = i + 1
+
+                else:
+
+                    if(len(self.gas_percentual_list)!=0):
+
+                        self.gasPercentual=mode(self.gas_percentual_list)
+                        print("Gas Percentual: " + str(self.gasPercentual) + "%")
+
+                    if(len(self.zero_adjustment_list)!=0):
+
+                        self.zero_adjustment=mode(self.zero_adjustment_list)
+                        print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
+
+                    return
+
+               
 
             cv2.imshow("image", self.image)
 
             if cv2.waitKey(5) & 0xFF == 27:
                 break
-        if(len(self.gas_percentual_list)!=0):
-
-            self.gasPercentual=mode(self.gas_percentual_list)
-            print("Gas Percentual: " + str(self.gasPercentual) + "%")
-
-        if(len(self.zero_adjustment_list)!=0):
-
-            self.zero_adjustment=mode(self.zero_adjustment_list)
-            print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
 
     def main_interface(self):
         #time.sleep(3)

@@ -219,7 +219,8 @@ class MAV2():
         return response
         
 
-    ########## Disarm #######
+    ########## Disarm ########
+    
     def disarm(self):
         service_timeout = 15
         rospy.loginfo('DISARMING MAV')
@@ -228,7 +229,36 @@ class MAV2():
         while self.drone_state.armed:
             response = self.arm_srv(False)
         rospy.loginfo('Drone is disarmed')
-        return response
+        
+        
+    #### Additional functions ####
+    
+    def camera_pid(self, x_error, y_error, z_error = 0):
+
+        self.TOL = 0.0140
+        self.PID = 1/2000
+        self.PID_area = 1/500000
+
+        # Centralization PID
+        vel_x = x_error * self.PID
+        vel_y = y_error * self.PID
+        vel_z = z_error * self.PID_area
+
+        # Set PID tolerances
+        if abs(vel_x) < self.TOL:
+            vel_x = 0.0
+        if abs(vel_y) < self.TOL:
+            vel_y = 0.0
+        if abs(vel_z) < self.TOL:
+            vel_z = 0.0
+        
+        # Set drone instant velocity
+        self.set_vel(vel_x, vel_y, vel_z)
+        self.get_logger().info(f"Set_vel -> x: {vel_x} y: {vel_y} z: {vel_z}")
+
+    def shake(self):
+        self.set_vel(vel_z = 0.05, yaw = 0.1)
+        self.set_vel(vel_z = -0.05, yaw = -0.1)
 
 
 if __name__ == '__main__':

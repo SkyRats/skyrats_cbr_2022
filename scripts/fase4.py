@@ -86,9 +86,31 @@ class fase4:
         self.mav2.land()
         self.mav2.get_logger().warn("QRs detected: " + str(self.detection.qrs))
 
+    def trajectory_test(self):
+        self.mav2.change_auto_speed(0.5)
+        self.detection.qr_debug = False
+        rclpy.spin_once(self.mav2) 
+        self.mav2.takeoff(2)
+        current_x = self.mav2.drone_pose.pose.position.x
+        current_y = self.mav2.drone_pose.pose.position.y
+
+        self.mav2.go_to_local(-1, 1, self.mav2.drone_pose.pose.position.z)
+        qr_result = self.detection.qrdetection(self.mav2.cam)
+        self.mav2.get_logger().warn("QR data: " + str(qr_result))
+        if not self.detection.detected:
+            self.mav2.get_logger().warn("Trying to detect again...")
+            self.mav2.go_to_local(self.mav2.drone_pose.pose.position.x, self.mav2.drone_pose.pose.position.y, self.mav2.drone_pose.pose.position.z + 0.2, 0, 0.1)
+            qr_result = self.detection.qrdetection(self.mav2.cam)
+            self.mav2.get_logger().warn("QR data: " + str(qr_result))
+        self.mav2.go_to_local(0, 0, 2)
+        self.mav2.land()
+        self.mav2.get_logger().warn("QRs detected: " + str(self.detection.qrs))
+
+
 if __name__ == "__main__":
     rclpy.init()
     mav = MAV2()
     missao = fase4(mav)
-    missao.trajectory()
+    missao.trajectory_test()
+    #missao.trajectory()
     

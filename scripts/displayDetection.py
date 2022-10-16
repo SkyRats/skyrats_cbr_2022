@@ -11,7 +11,7 @@ class displayDetection:
     
     def __init__(self):
 
-        self.cap = cv2.VideoCapture(2)
+        self.cap = cv2.VideoCapture('/home/renato/skyrats_ws2/src/skyrats_cbr_2022/images/drone.mp4')
 
         self.squares = []
         self.gas_percentual_list1 = []
@@ -57,11 +57,45 @@ class displayDetection:
                     #cv2.drawContours(self.image, [approx], 0, (255, 0, 0), 4)
                     #cv2.rectangle(self.image,(x,y),(x+y, y+h), (0,255,0),2)
 
+    def findCircles(self, gray):
+
+        top = False
+        bot = False
+        thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 5, 2)
+        topPiece = thresh[0:round(thresh.shape[0]/2), round(thresh.shape[1]*0.61):round(thresh.shape[1]*0.95)]
+        bottomPiece = thresh[round(thresh.shape[0]/2):round(thresh.shape[0]*0.95), round(thresh.shape[1]*0.61):round(thresh.shape[1]*0.95)]
+        cv2.imshow("percentage2", bottomPiece)
+        cv2.imshow("percentage1", topPiece)
+        
+        circlesTop = cv2.HoughCircles(topPiece,cv2.HOUGH_GRADIENT,1,20, param1=50,param2=30,minRadius=0,maxRadius=0)
+        circlesBot = cv2.HoughCircles(bottomPiece,cv2.HOUGH_GRADIENT,1,20, param1=50,param2=30,minRadius=0,maxRadius=0)
+
+        if circlesTop is not None:
+
+            top = True
+
+        if circlesBot is not None:
+
+            bot = True
+
+        if bot and top:
+
+            return True
+        
+        else:
+            
+            False
+            
+
+        
+
+
     def find_reshaped_square(self):
 
         gray = cv2.cvtColor(self.reshaped_image, cv2.COLOR_BGR2GRAY)
-        ret, thresh = cv2.threshold(gray, 140, 255, cv2.CHAIN_APPROX_NONE)
-        contours, hierarchy = cv2.findContours(gray, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        ret, thresh = cv2.threshold(gray, 120, 255, cv2.CHAIN_APPROX_NONE)
+        cv2.imshow("thresh2", thresh)
+        contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
         for contour in contours:
             approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
@@ -72,9 +106,12 @@ class displayDetection:
 
 
                 if aspectRatio >= 0.95 and aspectRatio < 1.1 and cv2.contourArea(contour) > 3000:
+                    
+                    circles = self.findCircles(gray)
 
-                    self.squares.append(contour)
-                    cv2.drawContours(self.reshaped_image, [approx], 0, (255, 0, 0), 4)
+                    if circles:
+                        self.squares.append(contour)
+                        cv2.drawContours(self.reshaped_image, [approx], 0, (255, 0, 0), 4)
 
                 
 
@@ -202,7 +239,7 @@ class displayDetection:
             # self.image = cv2.resize(self.image, (1280,720))
             kernel = np.ones((3, 3), np.uint8)
             self.image = cv2.dilate(self.image, kernel)
-            # self.image = cv2.erode(self.image, kernel)
+            self.image = cv2.erode(self.image, kernel)
             #canny = cv2.Canny(self.image,100,200)
             #cv2.imshow("canny", canny)
             gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)

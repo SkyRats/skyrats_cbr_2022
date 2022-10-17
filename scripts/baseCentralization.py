@@ -17,7 +17,7 @@ def centralize_on_cross(drone):
     detection = CrossDetection()
     vs = cv2.VideoCapture(0)
 
-    TARGET = (int(drone.cam.shape[1]/2), int(drone.cam.shape[0]/2))
+    TARGET = (int(vs.read().shape[1]/2), int(drone.read().shape[0]/2))
 
     is_centralized = False
     while not is_centralized:
@@ -29,11 +29,10 @@ def centralize_on_cross(drone):
         no_detection = 0
         
         while not cross_detected:
-            rclpy.spin_once(drone)
             
             parameters = [[0, 0, 0], [255, 255, 255], [1, 0, 0]]
 
-            frame,_ = vs.read()
+            _,frame = vs.read()
             list_of_bases = detection.base_detection(frame, parameters)
 
             if len(list_of_bases) > 0:
@@ -63,7 +62,7 @@ def centralize_on_cross(drone):
 
         # End centralization if the marker is close enough to the camera center
         if ((delta_x)**2 + (delta_y)**2)**0.5 < 40:
-            drone.set_vel(0, 0, 0)
+            # drone.set_vel(0, 0, 0)
             is_centralized = True
             print(f"Centralized! x: {delta_x} y: {delta_y}")
                 

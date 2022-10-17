@@ -1,5 +1,5 @@
-import rclpy
 from baseDetector import CrossDetection
+import cv2
 
 
 def centralize_on_cross(drone):
@@ -15,6 +15,7 @@ def centralize_on_cross(drone):
     '''
 
     detection = CrossDetection()
+    vs = cv2.VideoCapture(0)
 
     TARGET = (int(drone.cam.shape[1]/2), int(drone.cam.shape[0]/2))
 
@@ -30,9 +31,9 @@ def centralize_on_cross(drone):
         while not cross_detected:
             rclpy.spin_once(drone)
             
-            parameters = [[0, 0, 0], [255, 255, 255], [0, 0, 0]]
+            parameters = [[0, 0, 0], [255, 255, 255], [1, 0, 0]]
 
-            frame = drone.cam
+            frame,_ = vs.read()
             list_of_bases = detection.base_detection(frame, parameters)
 
             if len(list_of_bases) > 0:
@@ -73,10 +74,11 @@ if __name__ == '__main__':
 
     import sys
     import os
-    sys.path.insert(0,'/home/' + os.environ["USER"] + '/skyrats_ws2/src/mavbase2')
-    from MAV2 import MAV2
+    from MAV_ardupilot import MAV2
+    import rospy
 
-    rclpy.init(args=sys.argv)
+    rospy.init_node("centralization")
     mav = MAV2()
-
+    mav.takeoff(1)
+    rospy.sleep(5)
     centralize_on_cross(mav)

@@ -287,7 +287,7 @@ class MAV2():
             vel_z = 0.0
         
         # Set drone instant velocity
-        self.set_vel(vel_x, vel_y, vel_z)
+        #self.set_vel(vel_x, vel_y, vel_z)
         self.get_logger().info(f"Set_vel -> x: {vel_x} y: {vel_y} z: {vel_z}")
 
     def shake(self):

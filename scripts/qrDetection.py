@@ -19,7 +19,7 @@ class QRDetection():
         self.bases_detected = 0
     
     def qrdetection(self, vid):
-            self.frame = vid
+            self.frame = vid.read()
             #camera parameters
             dtype = 'linear'
             format = 'fullframe'
@@ -35,7 +35,7 @@ class QRDetection():
                 now = time.time()
                 if(now - init) > timeout:
                     return "Timeout for QR detection exceeded"
-                    
+                ret, self.frame = vid.read()
                 #reducing fish eye effect
                 self.frame = Defisheye(self.frame, dtype=dtype, format=format, fov=fov, pfov=pfov)            
                 self.frame = self.frame.convert(img_out)
@@ -65,8 +65,8 @@ class QRDetection():
                     init = time.time()
                     
 
-                    if cv2.waitKey(1) & 0xFF == ord("q"):
-                        break
+                if cv2.waitKey(1) & 0xFF == ord("q"):
+                    break
                     #cv2.destroyAllWindows()
 
             # cleanup

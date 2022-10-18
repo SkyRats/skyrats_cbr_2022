@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from statistics import mode
-from buzzer import Buzzer
+from plaquinha_classe import Buzzer
 TOL = 30
 class sensorDetection:
     

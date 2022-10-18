@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from statistics import mode
-from plaquinha_classe import Buzzer
+
 TOL = 30
 class sensorDetection:
     
@@ -119,7 +119,6 @@ if __name__ == "__main__":
     detecting = sensorDetection()
     sensorCount = 0
     fimdoTubo = False
-    buz = Buzzer(22)
 
     while not fimdoTubo :
         sensor = detecting.detect_sensors()

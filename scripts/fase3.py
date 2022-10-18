@@ -3,7 +3,7 @@ import rclpy
 import numpy as np
 from pickle import FALSE
 import time
-
+import math
 import sys
 import os
 sys.path.insert(0,'/home/' + os.environ["USER"] + '/skyrats_ws2/src/mavbase2')
@@ -18,7 +18,6 @@ class fase3:
     def __init__(self, mav2):
         self.mav2 = mav2
         self.bases_not_visited=[]
-        self.bases_visited=[]
         self.altura = 3
     #def precision_land(self):   
   
@@ -28,50 +27,26 @@ class fase3:
  
     def trajectory(self):
 
-        rclpy.spin_once(self.mav2) 
-        self.mav2.takeoff(self.altura)
-        current_x = self.mav2.drone_pose.pose.position.x
-        current_y = self.mav2.drone_pose.pose.position.y
-        dist_menor=8*(2**(1/2))
+        base1=(0.25, -6.25, 1)
+        base2=(2.75, 0.25, 1.5)
+        base3=(4, -3.5, 0)
+        base4=(6, -2, 0)
+        base5=(6, -6.5, 0)
+
+        self.bases_not_visited.append(base1)
+        self.bases_not_visited.append(base2)
+        self.bases_not_visited.append(base3)
+        self.bases_not_visited.append(base4)
+        self.bases_not_visited.append(base5)     
         qtdade_bases_visited = 0
-
-
-        self.bases_not_visited.append([0.25, -6.25, 1])
-        self.bases_not_visited.append([2.75, 0.25, 1.5])
-        self.bases_not_visited.append([4, -3.5, 0])
-        self.bases_not_visited.append([6, -2, 0])
-        self.bases_not_visited.append([6, -6.5, 0])
-
+        self.mav2.takeoff(self.altura) 
         while(qtdade_bases_visited!=5):
-            rclpy.spin_once(self.mav2) 
-            current_x = self.mav2.drone_pose.pose.position.x
-            current_y = self.mav2.drone_pose.pose.position.y
-            for i in range(0,len(self.bases_not_visited)):
-                
-                if self.bases_not_visited[i] not in self.bases_visited:
-                    print("entrei")
-                  
-                    X=self.bases_not_visited[i][0]
-                    Y=self.bases_not_visited[i][1]
 
-
-                    dist=np.sqrt((X- current_x)**2 + (Y - current_y)**2)
-
-                    if dist<dist_menor:
-                        dist_menor=dist
-                        i_oficial=i
-            dist_menor = 8*(2**(1/2))
-            self.mav2.go_to_local(current_x, current_y, 3)
-            self.mav2.go_to_local(self.bases_not_visited[i_oficial][0],self.bases_not_visited[i_oficial][1], 3)
-            self.mav2.go_to_local(self.bases_not_visited[i_oficial][0],self.bases_not_visited[i_oficial][1], self.bases_not_visited[i_oficial][2] + 0.5)
-            self.bases_visited.append(self.bases_not_visited[i_oficial]) 
-            # print(self.bases_visited)       
+            self.mav2.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], 3,  yaw=math.pi/2, sleep_time=10)
+            self.mav2.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.bases_not_visited[qtdade_bases_visited][2] + 0.5,   yaw=math.pi/2, sleep_time=10)     
             qtdade_bases_visited += 1
-        rclpy.spin_once(self.mav2) 
-        current_x = self.mav2.drone_pose.pose.position.x
-        current_y = self.mav2.drone_pose.pose.position.y    
-        self.mav2.go_to_local(current_x, current_y, 3)
-        self.mav2.go_to_local(0, 0, 3)
+   
+        self.mav.go_to_local(0, 0, self.altura + 0.5, yaw=math.pi/2, sleep_time=10)
         self.mav2.land()
             
 

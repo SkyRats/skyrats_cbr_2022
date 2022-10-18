@@ -11,7 +11,7 @@ class displayDetection:
     
     def __init__(self):
 
-        self.cap = cv2.VideoCapture('/home/renato/skyrats_ws2/src/skyrats_cbr_2022/images/drone.mp4')
+        self.cap = cv2.VideoCapture('/home/renato/Downloads/display_dataset.avi')
 
         self.squares = []
         self.gas_percentual_list1 = []
@@ -37,8 +37,6 @@ class displayDetection:
     
     def find_squares(self, contours):
 
-        self.squares= []
-
 
         for contour in contours:
             approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
@@ -48,27 +46,34 @@ class displayDetection:
                 aspectRatio = float(w) / h
 
 
-                if aspectRatio >= 0.95 and aspectRatio < 1.1 and cv2.contourArea(contour) > 3000:
+                if aspectRatio >= 0.95 and aspectRatio < 1.1 and cv2.contourArea(contour) > 3000 and cv2.contourArea(contour) < 20000:
 
                     self.reshape = True
                     self.reshaped_image = four_point_transform(self.image, approx.reshape(4,2)) 
                     #cv2.imshow("reshape", self.reshaped_image)
                     #self.squares.append(contour)
-                    #cv2.drawContours(self.image, [approx], 0, (255, 0, 0), 4)
+                    cv2.drawContours(self.image, [approx], 0, (255, 0, 0), 4)
                     #cv2.rectangle(self.image,(x,y),(x+y, y+h), (0,255,0),2)
 
     def findCircles(self, gray):
 
         top = False
         bot = False
-        thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 5, 2)
-        topPiece = thresh[0:round(thresh.shape[0]/2), round(thresh.shape[1]*0.61):round(thresh.shape[1]*0.95)]
-        bottomPiece = thresh[round(thresh.shape[0]/2):round(thresh.shape[0]*0.95), round(thresh.shape[1]*0.61):round(thresh.shape[1]*0.95)]
-        cv2.imshow("percentage2", bottomPiece)
+        #blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+        #thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+        ret, thresh = cv2.threshold(gray, 110, 255, cv2.CHAIN_APPROX_TC89_L1)
+        canny = cv2.Canny(gray, 100, 200)
+        topPiece = canny[0:round(thresh.shape[0]/2), round(thresh.shape[1]*0.61):round(thresh.shape[1]*0.95)]
+        bottomPiece = canny[round(thresh.shape[0]/2):round(thresh.shape[0]*0.95), round(thresh.shape[1]*0.61):round(thresh.shape[1]*0.95)]
         cv2.imshow("percentage1", topPiece)
-        
-        circlesTop = cv2.HoughCircles(topPiece,cv2.HOUGH_GRADIENT,1,20, param1=50,param2=30,minRadius=0,maxRadius=0)
-        circlesBot = cv2.HoughCircles(bottomPiece,cv2.HOUGH_GRADIENT,1,20, param1=50,param2=30,minRadius=0,maxRadius=0)
+        cv2.imshow("percentage2", bottomPiece)
+
+        circlesTop = cv2.HoughCircles(topPiece,cv2.HOUGH_GRADIENT,4,20, param1=50,param2=30,minRadius=0,maxRadius=0)
+        circlesBot = cv2.HoughCircles(bottomPiece,cv2.HOUGH_GRADIENT,4,20, param1=50,param2=30,minRadius=0,maxRadius=0)
+        #print(circlesTop)
+        #print (circlesBot)
+        (h, w) = self.reshaped_image.shape[:2]
+        (cX, cY) = (w // 2, h // 2)
 
         if circlesTop is not None:
 
@@ -82,18 +87,37 @@ class displayDetection:
 
             return True
         
-        else:
-            
-            False
-            
-
+        #if top and not bot:
+            #print("cheguei")
+           # M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0)
+            #self.reshaped_image = cv2.warpAffine(self.reshaped_image, M, (w, h))
+            #cv2.imshow("Rotated by -90 Degrees", rotated)
+            #return True
         
+        #if bot and not top:
+
+            #print("cheguei2")
+            #M = cv2.getRotationMatrix2D((cX, cY), -90, 1.0)
+            #self.reshaped_image = cv2.warpAffine(self.reshaped_image, M, (w, h))
+            #cv2.imshow("Rotated by -90 Degrees", rotated)
+            #return True
+
+
+        else:
+            print("cheguei3")
+            return False
+            
+      
 
 
     def find_reshaped_square(self):
 
+        self.squares= []
+
         gray = cv2.cvtColor(self.reshaped_image, cv2.COLOR_BGR2GRAY)
+        blurred = cv2.GaussianBlur(gray, (3, 3), 0)
         ret, thresh = cv2.threshold(gray, 120, 255, cv2.CHAIN_APPROX_NONE)
+        #thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 5, 2)
         cv2.imshow("thresh2", thresh)
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -105,13 +129,14 @@ class displayDetection:
                 aspectRatio = float(w) / h
 
 
-                if aspectRatio >= 0.95 and aspectRatio < 1.1 and cv2.contourArea(contour) > 3000:
+                if aspectRatio >= 0.95 and aspectRatio < 1.1 and cv2.contourArea(contour) > 2000:
                     
                     circles = self.findCircles(gray)
 
                     if circles:
                         self.squares.append(contour)
-                        cv2.drawContours(self.reshaped_image, [approx], 0, (255, 0, 0), 4)
+                        cv2.imshow("reshape", self.reshaped_image)
+                        #cv2.drawContours(self.reshaped_image, [approx], 0, (255, 0, 0), 4)
 
                 
 
@@ -129,17 +154,18 @@ class displayDetection:
         cropped_image = image_copy[x1:x2, y1:y2]
         
         #crop the top side of the image (gas percentual)
-        cropped_image1 = cropped_image[round(cropped_image.shape[0]*0.05):round(cropped_image.shape[0]/2), round(cropped_image.shape[1]*0.08):round(cropped_image.shape[1]*0.63)]
-        cv2.imshow("crop", cropped_image1)
+        cropped_image1 = cropped_image[round(cropped_image.shape[0]*0.02):round(cropped_image.shape[0]/2), round(cropped_image.shape[1]*0.08):round(cropped_image.shape[1]*0.65)]
+        #cv2.imshow("crop", cropped_image1)
         #crop the bottom side of the image (gas percentual)
         cropped_image2 = cropped_image[round(cropped_image.shape[0]/2):round(cropped_image.shape[0]*0.95), round(cropped_image.shape[1]*0.07):round(cropped_image.shape[1]*0.63)]
 
         #crop the first character of the gas percentual number
-        cropped_image3 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.06):round(cropped_image1.shape[1]*0.55)]
-        cv2.imshow("crop2", cropped_image3)
+        cropped_image3 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.04):round(cropped_image1.shape[1]*0.55)]
+        cv2.imshow("crop1", cropped_image3)
         #crop the second character of the gas percentual number
-        cropped_image4 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.55):cropped_image1.shape[1]]
+        cropped_image4 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.52):cropped_image1.shape[1]]
         
+        cv2.imshow("crop2", cropped_image4)
         #crop the zero adjustment number
         cropped_image5 = cropped_image2[0:cropped_image2.shape[0], round(cropped_image2.shape[1]*0.52):round(cropped_image2.shape[1]*0.99)]
 
@@ -150,7 +176,7 @@ class displayDetection:
         #crop the image that may contain "-" or not
         cropped_image7 = cropped_image2[round(cropped_image2.shape[0]*0.43):round(cropped_image2.shape[0]*0.57), round(cropped_image2.shape[1]*0.055):round(cropped_image2.shape[1]*0.36)]
 
-        #cv2.imshow("minus", cropped_image7)
+        cv2.imshow("minus", cropped_image7)
         #cv2.imshow("one", cropped_image6)
         
         #append the numbers images in their lists
@@ -202,13 +228,13 @@ class displayDetection:
 
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        ret, thresh = cv2.threshold(gray, 140, 255, cv2.CHAIN_APPROX_NONE)
+        ret, thresh = cv2.threshold(gray, 120, 255, cv2.CHAIN_APPROX_SIMPLE)
         # cv2.imshow("thresh", thresh)
 
         total = thresh.size
         zero = total - np.count_nonzero(thresh)
         ratio = zero/total
-        print(ratio)
+        #print(ratio)
     
         if ratio > tolerance:
             return True
@@ -238,25 +264,26 @@ class displayDetection:
             self.image = self.image.convert(img_out)
             # self.image = cv2.resize(self.image, (1280,720))
             kernel = np.ones((3, 3), np.uint8)
-            self.image = cv2.dilate(self.image, kernel)
-            self.image = cv2.erode(self.image, kernel)
+            dilated = cv2.dilate(self.image, kernel)
+            #erode = cv2.erode(self.image, kernel)
+            #blurred = cv2.GaussianBlur(dilated, (3, 3), 0)
             #canny = cv2.Canny(self.image,100,200)
             #cv2.imshow("canny", canny)
-            gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+            gray = cv2.cvtColor(dilated, cv2.COLOR_BGR2GRAY)
             # blurred = cv2.GaussianBlur(gray, (7, 7), 0)
-            thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
-            # ret, thresh = cv2.threshold(gray, 140, 255, cv2.CHAIN_APPROX_NONE)
+            #thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 3, 2)
+            ret, thresh = cv2.threshold(gray, 110, 255, cv2.CHAIN_APPROX_NONE)
             cv2.imshow("thresh", thresh)
 
             #cv2.imshow("thresh", thresh)
 
-            contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
             self.find_squares(contours)
 
             if self.reshape:
                 self.find_reshaped_square()
 
-            if self.squares:
+            if len(self.squares) > 0:
 
 
                 sorted_squares = sorted(self.squares, key = cv2.contourArea, reverse = True )
@@ -268,7 +295,7 @@ class displayDetection:
                 self.crop_image()
 
 
-                if(i < 20):
+                if(i < 200):
 
                     
                     
@@ -322,8 +349,8 @@ class displayDetection:
                             self.zero_adjustment = int(self.zero_adjustment)*-1
 
                         self.zero_adjustment_list.append(self.zero_adjustment)
-
-                        #print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
+                        
+                        
 
                     else: 
                         oneZeroAdj = self.isEmpty(self.zero_adjustment_image, 0.12)
@@ -331,7 +358,7 @@ class displayDetection:
 
                             print("Li nada")
 
-                            self.zero_adjustment =1;
+                            self.zero_adjustment =1
 
                             if one:
                                 self.zero_adjustment = int(self.zero_adjustment) + 10
@@ -340,35 +367,31 @@ class displayDetection:
                                 self.zero_adjustment = int(self.zero_adjustment)*-1
 
                             self.zero_adjustment_list.append(self.zero_adjustment)
+                            
 
-                        
-                    
-                    i = i + 1
+                if(len(self.gas_percentual_list1)!=0 and len(self.gas_percentual_list2)!=0):
 
-                else:
+                    self.gas_percentual[0]=mode(self.gas_percentual_list1)
+                    self.gas_percentual[1]=mode(self.gas_percentual_list2)
 
-                    if(len(self.gas_percentual_list1)!=0 and len(self.gas_percentual_list2)!=0):
+                    self.gasPercentual = int(str(self.gas_percentual[0]) + str(self.gas_percentual[1]))
+                    print("Gas Percentual: " + str(self.gasPercentual) + "%")
 
-                        self.gas_percentual[0]=mode(self.gas_percentual_list1)
-                        self.gas_percentual[1]=mode(self.gas_percentual_list2)
+                if(len(self.zero_adjustment_list)!=0):
 
-                        self.gasPercentual = int(str(self.gas_percentual[0]) + str(self.gas_percentual[1]))
-                        print("Gas Percentual: " + str(self.gasPercentual) + "%")
+                    self.zero_adjustment=mode(self.zero_adjustment_list)
+                    print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
 
-                    if(len(self.zero_adjustment_list)!=0):
 
-                        self.zero_adjustment=mode(self.zero_adjustment_list)
-                        print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
 
-                    return
-
-               
+                i = i + 1
 
             cv2.imshow("image", self.image)
 
             if cv2.waitKey(5) & 0xFF == 27:
                 break
 
+            
     def main_interface(self):
         #time.sleep(3)
         self.detection_loop()

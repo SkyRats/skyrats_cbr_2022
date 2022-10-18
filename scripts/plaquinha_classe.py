@@ -4,7 +4,9 @@ import time
 class Periferico():
     def __init__(self, pin) -> None:
         self.pin = pin
-        
+        #GPIO.setmode(GPIO.BCM)
+        #GPIO.setup(self.pin,GPIO.OUT, initial=GPIO.LOW)
+
     def ligar(self, delayTime):
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.pin, GPIO.OUT, initial=GPIO.LOW)

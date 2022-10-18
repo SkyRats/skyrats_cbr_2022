@@ -15,7 +15,8 @@ class Buzzer:
 		wpi.digitalWrite(self.pin, 0)
 		print("Desligado")
 
-buzzer = Buzzer()
-time = int(input("tempo: "))
-buzzer.on(time)
+if __name__ == "__main__":
+	buzzer = Buzzer()
+	time = int(input("tempo: "))
+	buzzer.on(time)
 

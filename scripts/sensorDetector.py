@@ -1,11 +1,12 @@
 import cv2
 import numpy as np
 from statistics import mode
+from plaquinha_classe import Buzzer
 
 class sensorDetection:
     
     def __init__(self):
-        self.capture = cv2.VideoCapture(0)
+        self.capture = cv2.VideoCapture(2)
         self.redSquaresCount = 0
         self.greenSquaresCount = 0
         self.greenRecord = [0 for i in range(10)]
@@ -43,8 +44,8 @@ class sensorDetection:
         lower_green = [10, 113, 86]
         upper_green = [124, 239, 179]
 
-        lower_red = [115, 137, 129]
-        upper_red = [179, 255, 255]
+        lower_red = [0, 148, 160]
+        upper_red = [39, 255, 187]
 
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         green_mask = self.get_mask(hsv, lower_green, upper_green)
@@ -115,15 +116,17 @@ class sensorDetection:
 
 if __name__ == "__main__":
     detecting = sensorDetection()
-
+    sensorCount = 0
     fimdoTubo = False
+    buz = Buzzer()
 
-    while not fimdoTubo:
+    while not fimdoTubo :
         sensor = detecting.detect_sensors()
         if sensor == "verde":
             print("Sensor verde detectado")
             #Ações quando o verde for detectado
         if sensor == "vermelho":
+            buz.ligar(3)
             print("Sensor vermelho detectado")
             #Ações quando o vermelho for detectado
             

@@ -3,7 +3,7 @@
 import rospy
 from mavros_msgs.srv import SetMode, CommandBool, CommandTOL, ParamSet
 from mavros_msgs.srv import CommandTOLRequest, CommandLongRequest, CommandLong, CommandBoolRequest
-from mavros_msgs.msg import State, ExtendedState, ParamValue
+from mavros_msgs.msg import State, ExtendedState, ParamValue, PositionTarget
 
 from geometry_msgs.msg import PoseStamped, TwistStamped
 import numpy as np
@@ -25,6 +25,7 @@ class MAV2():
         self.goal_vel = TwistStamped()
         self.drone_state = State()
         self.drone_extended_state = ExtendedState()
+        self.pose_target = PositionTarget()
 
         ############# Services ##################
 
@@ -39,6 +40,7 @@ class MAV2():
         ############### Publishers ##############
         self.local_position_pub = rospy.Publisher('/mavros/setpoint_position/local', PoseStamped, queue_size = 20)
         self.velocity_pub = rospy.Publisher('/mavros/setpoint_velocity/cmd_vel',  TwistStamped, queue_size=5)
+        self.target_pub = rospy.Publisher('/mavros/setpoint_raw/local', PositionTarget, queue_size=5)
 
         ########## Subscribers ##################
         self.local_atual = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.local_callback)
@@ -137,6 +139,7 @@ class MAV2():
         self.goal_pose.pose.position.x = float(x)
         self.goal_pose.pose.position.y = float(y)
         self.goal_pose.pose.position.z = float(z)
+        #self.goal_pose.header.frame_id = ""
         if yaw == None:
             self.goal_pose.pose.orientation = self.drone_pose.pose.orientation
         else:
@@ -151,9 +154,33 @@ class MAV2():
             self.set_mode("GUIDED")
         self.local_position_pub.publish(self.goal_pose)
 
+    def set_position_target(self, x_position=0, y_position=0, z_position=0, x_velocity=0, y_velocity=0, z_velocity=0, x_aceleration=0, y_aceleration=0, z_aceleration=0, yaw=0, yaw_rate=0, coordinate_frame = PositionTarget.FRAME_LOCAL_NED, type_mask=0b1111110111111000):
+        self.pose_target.coordinate_frame = coordinate_frame #Use PositionTarget.FRAME_LOCAL_NED para movimento relativo ao corpo do drone  
+        self.pose_target.type_mask = type_mask
+        #https://mavlink.io/en/messages/common.html#POSITION_TARGET_TYPEMASK
+
+        self.pose_target.position.x = x_position
+        self.pose_target.position.y = y_position
+        self.pose_target.position.z = z_position
+
+        self.pose_target.velocity.x = x_velocity
+        self.pose_target.velocity.y = y_velocity
+        self.pose_target.velocity.z = z_velocity
+
+        self.pose_target.acceleration_or_force.x = x_aceleration
+        self.pose_target.acceleration_or_force.y = y_aceleration
+        self.pose_target.acceleration_or_force.z = z_aceleration
+
+        self.pose_target.yaw = yaw
+        self.pose_target.yaw_rate = yaw_rate
+
+        self.target_pub.publish(self.pose_target)
+
+
     
-    def go_to_local(self, goal_x, goal_y, goal_z, yaw = None, TOL=0.2):
+    def go_to_local(self, goal_x, goal_y, goal_z, yaw = None, sleep_time=5):
         rospy.loginfo("Going towards local position: (" + str(goal_x) + ", " + str(goal_y) + ", " + str(goal_z) + "), with a yaw angle of: " + str(yaw))
+        """
         current_x = self.drone_pose.pose.position.x
         current_y = self.drone_pose.pose.position.y
         current_z = self.drone_pose.pose.position.z
@@ -175,6 +202,13 @@ class MAV2():
                 yaw_diff = yaw - current_yaw
             else:
                 yaw_diff = yaw + current_yaw
+        """
+        init_time = now = time.time()
+        while not rospy.is_shutdown() and now-init_time > sleep_time:
+            self.set_position(goal_x, goal_y, goal_z, yaw)
+            now = time.time()
+        rospy.spin_once(sleep_time)
+        
         rospy.loginfo("Arrived at requested position")
 
     
@@ -253,7 +287,7 @@ class MAV2():
             vel_z = 0.0
         
         # Set drone instant velocity
-        self.set_vel(vel_x, vel_y, vel_z)
+        #self.set_vel(vel_x, vel_y, vel_z)
         self.get_logger().info(f"Set_vel -> x: {vel_x} y: {vel_y} z: {vel_z}")
 
     def shake(self):
@@ -264,12 +298,13 @@ class MAV2():
 if __name__ == '__main__':
     rospy.init_node('mavbase2')
     mav = MAV2()
-    mav.takeoff(10)
+    mav.takeoff(5)
     rospy.sleep(30)
     mav.change_auto_speed(10)
-    mav.go_to_local(0,0,5, yaw=0)
-    mav.go_to_local(0,0,5, yaw=1.57)
-    mav.go_to_local(5,0,5)
+    mav.set_position_target(1, 1, 5)
+    #mav.go_to_local(0,0,5, yaw=0)
+    #mav.go_to_local(0,0,5, yaw=1.57)
+    #mav.go_to_local(5,0,5)
     mav.land()
 
   

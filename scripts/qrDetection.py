@@ -16,25 +16,26 @@ class QRDetection():
         self.det_number = 0
         self.qrs = []
         self.fisheye = False
+        self.bases_detected = 0
     
     def qrdetection(self, vid):
-            self.frame = vid
+            self.frame = vid.read()
             #camera parameters
             dtype = 'linear'
             format = 'fullframe'
             fov = 140
             pfov = 90
             img_out = f"./images/out/TESTE_{dtype}_{format}_{pfov}_{fov}.jpg"
-            timeout = 5
+            timeout = 5 # timeout in seconds for the drone to give up the qr detection
             init = time.time()
             now = time.time()
 
-            while not self.detected:
+            while not self.detected and self.det_number < 5:
                 self.qr_data = ""
                 now = time.time()
                 if(now - init) > timeout:
-                    return "Timeout exceeded, giving up QR detection"
-                    
+                    return "Timeout for QR detection exceeded"
+                ret, self.frame = vid.read()
                 #reducing fish eye effect
                 self.frame = Defisheye(self.frame, dtype=dtype, format=format, fov=fov, pfov=pfov)            
                 self.frame = self.frame.convert(img_out)
@@ -59,9 +60,14 @@ class QRDetection():
                     cv2.imshow("Frame", self.frame)
                     ret, self.frame = self.cam.read()
                     print("QR data: " + str(self.qr_data))
+                    self.detected = False
+                    self.det_number = 0
+                    init = time.time()
+                    
 
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
+                    #cv2.destroyAllWindows()
 
             # cleanup
             cv2.destroyAllWindows()
@@ -83,6 +89,6 @@ class QRDetection():
 
 if __name__ == "__main__"  :
     det = QRDetection()
-    result = det.qrtest(0)
+    result = det.qrtest(4)
     print(str(result))
     

@@ -1,5 +1,5 @@
-import rclpy
 from baseDetector import CrossDetection
+import cv2
 
 
 def centralize_on_cross(drone):
@@ -15,8 +15,9 @@ def centralize_on_cross(drone):
     '''
 
     detection = CrossDetection()
+    vs = cv2.VideoCapture(0)
 
-    TARGET = (int(drone.cam.shape[1]/2), int(drone.cam.shape[0]/2))
+    TARGET = (int(vs.read().shape[1]/2), int(drone.read().shape[0]/2))
 
     is_centralized = False
     while not is_centralized:
@@ -28,24 +29,23 @@ def centralize_on_cross(drone):
         no_detection = 0
         
         while not cross_detected:
-            rclpy.spin_once(drone)
             
-            parameters = [[0, 0, 0], [255, 255, 255], [0, 0, 0]]
+            parameters = [[0, 0, 0], [255, 255, 255], [1, 0, 0]]
 
-            frame = drone.cam
+            _,frame = vs.read()
             list_of_bases = detection.base_detection(frame, parameters)
 
             if len(list_of_bases) > 0:
                 cross_detected = True
                 timer = 0
 
-            if timer > 1000:
+            if timer > 100:
                 print("No visible bases, shaking drone...")
-                # drone.shake()
+                drone.shake()
                 timer = 0
                 no_detection += 1
 
-            if no_detection > 10:
+            if no_detection > 5:
                 print("Aruco not found...")
                 return
 
@@ -61,8 +61,8 @@ def centralize_on_cross(drone):
         drone.camera_pid(delta_x, delta_y, 0)
 
         # End centralization if the marker is close enough to the camera center
-        if ((delta_x)**2 + (delta_y)**2)**0.5 < 40:
-            drone.set_vel(0, 0, 0)
+        if ((delta_x)**2 + (delta_y)**2)**0.5 < 100:
+            # drone.set_vel(0, 0, 0)
             is_centralized = True
             print(f"Centralized! x: {delta_x} y: {delta_y}")
                 
@@ -73,10 +73,11 @@ if __name__ == '__main__':
 
     import sys
     import os
-    sys.path.insert(0,'/home/' + os.environ["USER"] + '/skyrats_ws2/src/mavbase2')
-    from MAV2 import MAV2
+    from MAV_ardupilot import MAV2
+    import rospy
 
-    rclpy.init(args=sys.argv)
+    rospy.init_node("centralization")
     mav = MAV2()
-
+    mav.takeoff(1.5)
+    rospy.sleep(5)
     centralize_on_cross(mav)

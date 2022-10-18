@@ -42,7 +42,7 @@ def centralize_on_cross(drone):
 
             if timer > 100:
                 print("No visible bases, shaking drone...")
-                # drone.shake()
+                drone.shake()
                 timer = 0
                 no_detection += 1
 
@@ -62,6 +62,7 @@ def centralize_on_cross(drone):
         drone.camera_pid(delta_x, delta_y, 0)
 
         # End centralization if the marker is close enough to the camera center
+
         if ((delta_x)**2 + (delta_y)**2)**0.5 < 80:
             # drone.set_vel(0, 0, 0)
             is_centralized = True
@@ -79,7 +80,7 @@ if __name__ == '__main__':
 
     rospy.init_node("centralization")
     mav = MAV2()
-    mav.takeoff(1.75)
+    mav.takeoff(1.5)
     rospy.sleep(5)
     print("centralize on cross")
     centralize_on_cross(mav)

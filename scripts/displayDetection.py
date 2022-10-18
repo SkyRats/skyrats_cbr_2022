@@ -56,58 +56,57 @@ class displayDetection:
                     #cv2.rectangle(self.image,(x,y),(x+y, y+h), (0,255,0),2)
 
     def findCircles(self, gray):
+        finded = False
+        i = 0
 
-        top = False
-        bot = False
-        #blurred = cv2.GaussianBlur(gray, (3, 3), 0)
-        #thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-        ret, thresh = cv2.threshold(gray, 110, 255, cv2.CHAIN_APPROX_TC89_L1)
-        canny = cv2.Canny(gray, 100, 200)
-        topPiece = canny[0:round(thresh.shape[0]/2), round(thresh.shape[1]*0.61):round(thresh.shape[1]*0.95)]
-        bottomPiece = canny[round(thresh.shape[0]/2):round(thresh.shape[0]*0.95), round(thresh.shape[1]*0.61):round(thresh.shape[1]*0.95)]
-        cv2.imshow("percentage1", topPiece)
-        cv2.imshow("percentage2", bottomPiece)
+        while (not finded) or i < 3:
 
-        circlesTop = cv2.HoughCircles(topPiece,cv2.HOUGH_GRADIENT,4,20, param1=50,param2=30,minRadius=0,maxRadius=0)
-        circlesBot = cv2.HoughCircles(bottomPiece,cv2.HOUGH_GRADIENT,4,20, param1=50,param2=30,minRadius=0,maxRadius=0)
-        #print(circlesTop)
-        #print (circlesBot)
-        (h, w) = self.reshaped_image.shape[:2]
-        (cX, cY) = (w // 2, h // 2)
+            top = False
+            bot = False
 
-        if circlesTop is not None:
+            ret, thresh = cv2.threshold(gray, 110, 255, cv2.CHAIN_APPROX_TC89_L1)
+            canny = cv2.Canny(gray, 100, 200)
+            topPiece = canny[0:round(thresh.shape[0]/2), round(thresh.shape[1]*0.61):round(thresh.shape[1]*0.95)]
+            bottomPiece = canny[round(thresh.shape[0]/2):round(thresh.shape[0]*0.95), round(thresh.shape[1]*0.61):round(thresh.shape[1]*0.95)]
+            cv2.imshow("percentage1", topPiece)
+            cv2.imshow("percentage2", bottomPiece)
 
-            top = True
+            circlesTop = cv2.HoughCircles(topPiece,cv2.HOUGH_GRADIENT,4,20, param1=50,param2=30,minRadius=0,maxRadius=0)
+            circlesBot = cv2.HoughCircles(bottomPiece,cv2.HOUGH_GRADIENT,4,20, param1=50,param2=30,minRadius=0,maxRadius=0)
 
-        if circlesBot is not None:
+            if circlesTop is not None:
 
-            bot = True
+                top = True
 
-        if bot and top:
+            if circlesBot is not None:
+
+                bot = True
+
+            if bot and top:
+
+                finded = True
+
+            else:
+                
+                print("cheguei")
+                (h, w) = self.reshaped_image.shape[:2]
+                (cX, cY) = (w // 2, h // 2)
+
+                M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0)
+                self.reshaped_image = cv2.warpAffine(self.reshaped_image, M, (w, h))
+                rotated = self.reshaped_image
+                cv2.imshow("Rotated by -90 Degrees", rotated)
+                
+            i = i + 1
+
+        if finded:
 
             return True
-        
-        #if top and not bot:
-            #print("cheguei")
-           # M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0)
-            #self.reshaped_image = cv2.warpAffine(self.reshaped_image, M, (w, h))
-            #cv2.imshow("Rotated by -90 Degrees", rotated)
-            #return True
-        
-        #if bot and not top:
-
-            #print("cheguei2")
-            #M = cv2.getRotationMatrix2D((cX, cY), -90, 1.0)
-            #self.reshaped_image = cv2.warpAffine(self.reshaped_image, M, (w, h))
-            #cv2.imshow("Rotated by -90 Degrees", rotated)
-            #return True
-
 
         else:
-            print("cheguei3")
+
             return False
-            
-      
+
 
 
     def find_reshaped_square(self):

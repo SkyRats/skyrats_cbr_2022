@@ -1,16 +1,16 @@
 import cv2
 import numpy as np
 from statistics import mode
-from plaquinha_classe import Buzzer
-
+from buzzer import Buzzer
+TOL = 30
 class sensorDetection:
     
     def __init__(self):
         self.capture = cv2.VideoCapture(0)
         self.redSquaresCount = 0
         self.greenSquaresCount = 0
-        self.greenRecord = [0 for i in range(10)]
-        self.redRecord =[0 for i in range(10)]
+        self.greenRecord = [0 for i in range(TOL)]
+        self.redRecord =[0 for i in range(TOL)]
         
         
     def get_mask(self, hsv , lower_color , upper_color):
@@ -21,13 +21,14 @@ class sensorDetection:
 
     def get_square_area(self,img):
         squaresDetected = []
-        min_area = 400 #checar valor mais apropriado
+        min_area = 300 #checar valor mais apropriado
     
         contours,junk=cv2.findContours(img,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
         #cv2.drawContours(frame,contours,-1,(255,0,0),3)
         
         for contour in contours:
             area = cv2.contourArea(contour)
+        
             if area >= min_area:
                 #cv2.drawContours(frame,[contour],0,(255,0,0),3)
                 x,y,w,h=cv2.boundingRect(contour)
@@ -41,11 +42,11 @@ class sensorDetection:
     def getSquares (self, image):
         
         #Mascaras testes
-        lower_green = [10, 113, 86]
-        upper_green = [124, 239, 179]
+        lower_green = [54, 78, 91]
+        upper_green = [90, 193, 216]
 
-        lower_red = [0, 148, 160]
-        upper_red = [39, 255, 187]
+        lower_red = [0, 143, 0]
+        upper_red = [6, 228, 255]
 
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         green_mask = self.get_mask(hsv, lower_green, upper_green)
@@ -97,14 +98,14 @@ class sensorDetection:
             self.greenSquaresCount = mode(self.greenRecord)
         if(mode(self.greenRecord) > self.greenSquaresCount):
             self.greenSquaresCount = mode(self.greenRecord)
-            self.greenRecord = [ self.greenSquaresCount for i in range(10)]
+            self.greenRecord = [ self.greenSquaresCount for i in range(TOL)]
             sensor = "verde"
 
         if(mode(self.redRecord) < self.redSquaresCount):
             self.redSquaresCount = mode(self.redRecord)
         if(mode(self.redRecord) > self.redSquaresCount):
             self.redSquaresCount = mode(self.redRecord)
-            self.redRecord = [ self.redSquaresCount for i in range(10)]
+            self.redRecord = [ self.redSquaresCount for i in range(TOL)]
             sensor = "vermelho"
     
         if cv2.waitKey(20) & 0xFF == ord('q'):
@@ -124,11 +125,10 @@ if __name__ == "__main__":
         sensor = detecting.detect_sensors()
         if sensor == "verde":
             print("Sensor verde detectado")
-            #Ações quando o verde for detectado
         if sensor == "vermelho":
             buz.ligar(3)
             print("Sensor vermelho detectado")
-            #Ações quando o vermelho for detectado
+            
             
     detecting.capture.release()
     cv2.destroyAllWindows()

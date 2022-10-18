@@ -16,18 +16,19 @@ class fase2:
         self.vel_cruzeiro = 0.5
 
         # velocidade na qual o drone percorrerá o tubo
-        self.vel_tubo = 0.5
+        self.vel_tubo = 0.1
 
         # altura do voo em relação ao tamanho incial da base costeira
         self.altitude = 0.5
 
-        self.coord_tubo_inicial = (0.75, 3.5)
+        self.coord_tubo_inicial = (0.25, 3.5)
         self.coord_tubo_final = (-3.2, 1)
 
         self.buz = Buzzer(22)
         
     def run(self):
         self.mav.takeoff(self.altitude)
+        rospy.sleep(7)
 
         # vai para o inicio do tubo
         self.mav.change_auto_speed(self.vel_cruzeiro)
@@ -38,7 +39,8 @@ class fase2:
         self.mav.change_auto_speed(self.vel_tubo)
         detecting = sensorDetection()
         sensor_count = 0
-        while not sensor_count < 5 :
+        while sensor_count < 5 :
+            rospy.loginfo("Altura de voo:" + str(self.altitude))
             sensor = detecting.detect_sensors()
             if sensor == "verde":
                 print("Sensor verde detectado")
@@ -53,7 +55,7 @@ class fase2:
         rospy.loginfo('Fim do tubo encontrado! Voltando para a posição incial')
 
         self.mav.change_auto_speed(self.vel_cruzeiro)
-        self.mav.go_to_local(0, 0, self.altura + 0.5, yaw=math.pi/2, sleep_time=10)
+        self.mav.go_to_local(0, 0, self.altitude + 0.5, yaw=math.pi/2, sleep_time=10)
 
         self.mav.land()
         

@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from statistics import mode
 
-TOL = 30
+TOL = 15
 class sensorDetection:
     
     def __init__(self):

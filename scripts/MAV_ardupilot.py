@@ -4,7 +4,7 @@ import rospy
 from mavros_msgs.srv import SetMode, CommandBool, CommandTOL, ParamSet
 from mavros_msgs.srv import CommandTOLRequest, CommandLongRequest, CommandLong, CommandBoolRequest
 from mavros_msgs.msg import State, ExtendedState, ParamValue, PositionTarget
-
+import time
 from geometry_msgs.msg import PoseStamped, TwistStamped
 import numpy as np
 
@@ -96,6 +96,7 @@ class MAV2():
         rospy.loginfo("setting FCU mode: {0}".format(mode))
         service_timeout = 15
         rospy.wait_for_service('/mavros/set_mode', service_timeout)
+        response = True
         while (self.drone_state.mode != mode ):        
             response = self.set_mode_srv(0, mode)
         return response
@@ -204,10 +205,9 @@ class MAV2():
                 yaw_diff = yaw + current_yaw
         """
         init_time = now = time.time()
-        while not rospy.is_shutdown() and now-init_time > sleep_time:
+        while not rospy.is_shutdown() and now-init_time < sleep_time:
             self.set_position(goal_x, goal_y, goal_z, yaw)
             now = time.time()
-        rospy.spin_once(sleep_time)
         
         rospy.loginfo("Arrived at requested position")
 
@@ -270,7 +270,7 @@ class MAV2():
     def camera_pid(self, x_error, y_error, z_error = 0):
 
         self.TOL = 0.0140
-        self.PID = 1/2000
+        self.PID = 1/1500
         self.PID_area = 1/500000
 
         # Centralization PID
@@ -287,8 +287,8 @@ class MAV2():
             vel_z = 0.0
         
         # Set drone instant velocity
-        #self.set_vel(vel_x, vel_y, vel_z)
-        self.get_logger().info(f"Set_vel -> x: {vel_x} y: {vel_y} z: {vel_z}")
+        self.set_vel(vel_x, vel_y, vel_z)
+        rospy.loginfo(f"Set_vel -> x: {vel_x} y: {vel_y} z: {vel_z}")
 
     def shake(self):
         self.set_vel(vel_z = 0.05, yaw = 0.1)
@@ -298,13 +298,13 @@ class MAV2():
 if __name__ == '__main__':
     rospy.init_node('mavbase2')
     mav = MAV2()
-    mav.takeoff(5)
-    rospy.sleep(30)
-    mav.change_auto_speed(10)
-    mav.set_position_target(1, 1, 5)
-    #mav.go_to_local(0,0,5, yaw=0)
-    #mav.go_to_local(0,0,5, yaw=1.57)
-    #mav.go_to_local(5,0,5)
+    mav.takeoff(1.2)
+    rospy.sleep(5)
+    mav.change_auto_speed(0.5)
+    import math
+    mav.go_to_local(1,0,1.2,yaw=math.pi/2)
+    mav.go_to_local(0,1,1.2,yaw=math.pi/2)
+    mav.go_to_local(0,0,2,yaw=math.pi/2)
     mav.land()
 
   

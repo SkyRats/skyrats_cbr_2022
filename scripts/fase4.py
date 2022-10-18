@@ -111,7 +111,7 @@ class fase4:
         self.mav2.go_to_local(1, 1, 1)
         self.mav2.go_to_local(0, 0, 1)
         self.mav2.land()
-        self.mav2.get_logger().warn("QRs detected: " + str(self.detection.qrs))
+        rospy.loginfo("QRs detected: " + str(self.detection.qrs))
 
 
 if __name__ == "__main__":

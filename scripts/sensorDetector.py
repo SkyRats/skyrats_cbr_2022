@@ -6,7 +6,7 @@ from plaquinha_classe import Buzzer
 class sensorDetection:
     
     def __init__(self):
-        self.capture = cv2.VideoCapture(2)
+        self.capture = cv2.VideoCapture(0)
         self.redSquaresCount = 0
         self.greenSquaresCount = 0
         self.greenRecord = [0 for i in range(10)]
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     detecting = sensorDetection()
     sensorCount = 0
     fimdoTubo = False
-    buz = Buzzer()
+    buz = Buzzer(22)
 
     while not fimdoTubo :
         sensor = detecting.detect_sensors()

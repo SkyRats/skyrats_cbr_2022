@@ -105,9 +105,12 @@ class MAV2():
         service_timeout = 15
         rospy.wait_for_service('/mavros/param/set', service_timeout)
         a = ParamValue()
-        a.real = param_value        
-        self.param_set_srv(param_name, a)
-
+        a.real = param_value   
+        try:     
+            self.param_set_srv(param_name, a)
+        except:
+            print("Failed to set param")
+            
     def takeoff(self, height):
         rospy.loginfo("TAKING OFF...")
         self.set_mode("GUIDED")

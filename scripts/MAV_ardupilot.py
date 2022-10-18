@@ -302,10 +302,13 @@ if __name__ == '__main__':
     #rospy.sleep(5)
     import tf
     listener = tf.TransformListener()
-    while not rospy.is_shutdown()
-        (trans,rot) = listener.lookupTransform('/camera_odom_frame', '/camera_pose_frame', rospy.Time(0))
-        print("translation: " + str(trans))
-        print("rotation: " + str(rot))
+    while not rospy.is_shutdown():
+        try:
+            (trans,rot) = listener.lookupTransform('camera_odom_frame', 'camera_pose_frame', rospy.Time(0))
+            print("translation: " + str(trans))
+            print("rotation: " + str(rot))
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
     #mav.change_auto_speed(0.5)
     #import math
     #mav.go_to_local(1,0,1.2,yaw=math.pi/2)

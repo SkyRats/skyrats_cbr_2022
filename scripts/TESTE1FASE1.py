@@ -248,6 +248,7 @@ def centralize_on_cross(drone):
     if ((delta_x)**2 + (delta_y)**2)**0.5 < 80:
         drone.set_vel(0, 0, 0)
         print(f"Drone já centralizado! x: {delta_x} y: {delta_y}")
+        return True
 
     # Sabendo a posição da base em relação à câmera, movimentar o drone na direção da base
     elif SETVEL:
@@ -267,7 +268,7 @@ def centralize_on_cross(drone):
         now = rospy.get_rostime()
         while not rospy.get_rostime() - now > rospy.Duration(secs=tempo) and not rospy.is_shutdown():
             drone.set_vel(vel_x, vel_y)
-            drone.set_vel(0, 0, 0)
+        drone.set_vel(0, 0, 0)
             
     return True
         

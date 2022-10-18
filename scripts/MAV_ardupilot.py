@@ -106,8 +106,7 @@ class MAV2():
         rospy.wait_for_service('/mavros/param/set', service_timeout)
         a = ParamValue()
         a.real = param_value        
-        response = self.param_set_srv(param_name, a)
-        return response.success
+        self.param_set_srv(param_name, a)
 
     def takeoff(self, height):
         rospy.loginfo("TAKING OFF...")
@@ -214,7 +213,7 @@ class MAV2():
     
     def change_auto_speed(self, guided_vel): # Velocity of guided mode in m/s
         rospy.loginfo("Changing speed to " + str(guided_vel))
-        return self.set_param('WPNAV_SPEED', float(guided_vel*100))
+        self.set_param('WPNAV_SPEED', float(guided_vel*100))
 
 
     def set_vel(self, x, y, z, yaw = 0):
@@ -247,6 +246,7 @@ class MAV2():
         rospy.loginfo('ARMING MAV') 
         rospy.wait_for_service('mavros/cmd/arming', service_timeout)
         self.arm_srv(True)
+        response = True
         while not self.drone_state.armed:
             response = self.arm_srv(True)
         rospy.loginfo('Drone is armed')
@@ -297,15 +297,21 @@ class MAV2():
 
 if __name__ == '__main__':
     rospy.init_node('mavbase2')
-    mav = MAV2()
-    mav.takeoff(1.2)
-    rospy.sleep(5)
-    mav.change_auto_speed(0.5)
-    import math
-    mav.go_to_local(1,0,1.2,yaw=math.pi/2)
-    mav.go_to_local(0,1,1.2,yaw=math.pi/2)
-    mav.go_to_local(0,0,2,yaw=math.pi/2)
-    mav.land()
+    #mav = MAV2()
+    #mav.takeoff(1.2)
+    #rospy.sleep(5)
+    import tf
+    listener = tf.TransformListener()
+    while not rospy.is_shutdown()
+        (trans,rot) = listener.lookupTransform('/camera_odom_frame', '/camera_pose_frame', rospy.Time(0))
+        print("translation: " + str(trans))
+        print("rotation: " + str(rot))
+    #mav.change_auto_speed(0.5)
+    #import math
+    #mav.go_to_local(1,0,1.2,yaw=math.pi/2)
+    #mav.go_to_local(0,1,1.2,yaw=math.pi/2)
+    #mav.go_to_local(0,0,2,yaw=math.pi/2)
+    #mav.land()
 
   
 

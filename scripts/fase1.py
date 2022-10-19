@@ -1,47 +1,42 @@
-    #!/usr/bin/env python3
-import cv2
-import rclpy
-import numpy as np
-from pickle import FALSE
-import time
-
+ #!/usr/bin/env python3
+from jinja2 import pass_eval_context
 from baseDetector import CrossDetection
-import sys
-import os
-sys.path.insert(0,'/home/' + os.environ["USER"] + '/skyrats_ws2/src/mavbase2')
-from MAV2 import MAV2
-sys.path.insert(0,'/home/' + os.environ["USER"] + '/skyrats_ws2/src/marker_detection/scripts/CBRbase')
-from crossdetection import find_potentials, aply_filters, verify
+import cv2
+import rospy
+import numpy as np
+import time
+import math
+from MAV_ardupilot import MAV2
 
-from tf_transformations import quaternion_from_euler, euler_from_quaternion
 
 
 TOL = 0.5 #tolerancia de erro das bases 
 CAM_FOV = 1.64061 #94 graus
-init_height = 0.5
+INIT_HEIGHT = 0.5
 
-# [self.mav.drone_pose.pose.position.x, self.mav.drone_pose.pose.position.y, self.mav.drone_pose.pose.position.z]
 
 class fase1:
-    def __init__(self, mav2):
-        self.mav2 = mav2
+    def __init__(self, mav):
+        self.mav = mav
+        self.detection = detection
 
+        # self.base_shortly = 0
+        self.ja_mapeada = False  
         self.bases_visited = 0
         self.bases_stored = []   
-        self.base_shortly = 0
-        self.ja_mapeada = False  
-        self.vel = 0.5
 
+        self.mav = mav
+        
+        # velocidade de cruzeiro
+        self.vel_cruzeiro = 0.2
 
-        self.tube_found = False
-        self.fim_encontrado = False
-        self.cx_tube = self.cy_tube = self.tw = self.th = 0.0
-        self.rows = self.cols = 0
+        # velocidade na qual o drone percorrerá o tubo
+        self.vel_tubo = 0.1
+
+        # altura do voo em relação ao tamanho incial da base costeira
+        self.altitude = 1.5 - INIT_HEIGHT
 
     def centralize_on_cross(self, drone):
-
-        detection = CrossDetection()
-
         TARGET = (int(drone.cam.shape[1]/2), int(drone.cam.shape[0]/2))
 
         is_centralized = False
@@ -54,8 +49,7 @@ class fase1:
             no_detection = 0
             
             while not cross_detected:
-                rclpy.spin_once(drone)
-                
+                              
                 parameters = [[0, 0, 0], [255, 255, 255], [0, 0, 0]]
 
                 frame = drone.cam
@@ -67,7 +61,8 @@ class fase1:
 
                 if timer > 1000:
                     print("No visible bases, shaking drone...")
-                    drone.shake()
+                    #drone.shake()
+                    #self.mav.go_to_local(self.mav.drone_pose.pose.position.x, self.mav.drone_pose.pose.position.y, self.mav.drone_pose.pose.position.z + 0.5)
                     timer = 0
                     no_detection += 1
 
@@ -107,14 +102,13 @@ class fase1:
     
     def base_detection(self, img, parameters):
 
-        img_filter = aply_filters(img, parameters)
+        img_filter = detection.aply_filters(img, parameters)
 
-        list_of_potentials = find_potentials(img_filter)
-
+        list_of_potentials = detection.find_potentials(img_filter)
         result = []
         for potential in list_of_potentials:
 
-            if verify(potential, img_filter):
+            if detection.verify(potential, img_filter):
                 M = cv2.moments(potential)
                 if M['m00'] != 0.0:
                     x = int(M['m10']/M['m00'])
@@ -129,203 +123,228 @@ class fase1:
 
         return result       
 
-    def tube(self, mask_tube): 
-        current_x = self.mav2.drone_pose.pose.position.x
-        current_y = self.mav2.drone_pose.pose.position.y
-        
-        dist_real = np.tan(CAM_FOV/2) * self.mav2.drone_pose.pose.position.z
-        one_pixel_in_meters = dist_real/(self.w/2)
+    def tube(self, mask_tube):
+        pass
+    
+    
+    # def mapping(self, x, y):
+    #     j = 0  
+    #     for j in range(self.bases_visited):
+    #         print(self.bases_stored[j][1])
+    #         print(self.bases_stored[j][2])
+    #         if (abs(self.bases_stored[j][1] -x) - 0.2 <= TOL) and (abs(self.bases_stored[j][2] - y) - 0.2 <= TOL):
+    #                 self.ja_mapeada = True
+    #     if self.ja_mapeada == False:
+    #         print("Base localizada: " + str(x) + " , " + str(y))
+    #         #   self.mav.go_to_local(x, y, 3)
+    #         self.mav.land()
+    #         time.sleep(10)
+    #         if self.bases_visited == 1:
+    #             self.bases_stored.append(["A", -4.05, -0.55, 1.0])
+    #             print("Base A visitada")
+    #         elif self.bases_visited == 2:
+    #             self.bases_stored.append(["B", -3.58, 7.02, 1.0])
+    #             print("Base B visitada")
+    #         elif self.bases_visited == 3:
+    #             self.bases_stored.append(["C", self.mav.drone_pose.pose.position.x, self.mav.drone_pose.pose.position.y, self.mav.drone_pose.pose.position.z])
+    #             print("Base C visitada")
+    #         elif self.bases_visited == 4:
+    #             self.bases_stored.append(["D", self.mav.drone_pose.pose.position.x, self.mav.drone_pose.pose.position.y, self.mav.drone_pose.pose.position.z])
+    #             print("Base D visitada")
+    #         elif self.bases_visited == 5:
+    #             self.bases_stored.append(["E", self.mav.drone_pose.pose.position.x, self.mav.drone_pose.pose.position.y, self.mav.drone_pose.pose.position.z])
+    #             print("Base E visitada")
+    #         self.bases_visited += 1
+    #         self.mav.takeoff(self.altitude) 
+    #         rospy.sleep(7)       
+    #         self.mav.go_to_local(self.mav.drone_pose.pose.position.x, self.mav.drone_pose.pose.position.y, self.altitude)
+    #         self.mav.hold(2) 
+    #     self.base_shortly = 0 
+    #     self.ja_mapeada = False 
 
-
-        dif_x = self.cx_tube - self.image_center_x # dif_x = diferenca entre o centro da imagem e o centro do barco
-        dif_y = self.cy_tube  - self.image_center_y
-
-        meters_y = dif_x * one_pixel_in_meters  # Conversao da diferenca em pixels para metros
-        meters_x = dif_y * one_pixel_in_meters
-
-        cord_base_x = current_x - meters_x #Coordenada da base movel
-        cord_base_y = current_y - meters_y
-        self.mav2.go_to_local(cord_base_x, cord_base_y , 3)
-        time.sleep(2)
-        self.mav2.go_to_local(cord_base_x, cord_base_y , 1)
-        hight_saved_x = self.mav2.drone_pose.pose.position.x
-        hight_saved_y = self.mav2.drone_pose.pose.position.y
-
-        _, threshold = cv2.threshold(mask_tube, 0, 10, cv2.THRESH_BINARY)
-        
-        contours, _ = cv2.findContours(
-            threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-        for contour in contours:
-            if i == 0:
-                i = 1
-                continue
-            # cv2.approxPloyDP() function to approximate the shape
-            approx = cv2.approxPolyDP(
-                contour, 0.01 * cv2.arcLength(contour, True), True)
-            
-            if len(approx) == 4:
-                M = cv2.moments(contour)
-                try: 
-                    self.cx_tube = int(M['m10']/M['m00']) #Passa o ponto do frame que foram encontradas os barcos
-                    self.cy_tube = int(M['m01']/M['m00'])
-                except ZeroDivisionError:
-                    continue
-                (cx, cy, self.tw, self.th) = cv2.boundingRect(approx)   
-
-        atan_vel = self.tw/self.th
-
-        hight_i = (self.th**2 +self.tw**2)/2
-
-        self.mav2.go_to_local(cord_base_x, cord_base_y , 1)
-        self.mav2.rotate(atan_vel)
-
-        while self.fim_encontrado == False:
-            self.mav2.set_vel(self.vel, 0,0)
-            self.rows, self.cols, b = mask_tube.shape
-            for i in range(self.cols):
-                if mask_tube[self.rows - 200, i] == [255, 255, 255]:
-                    self.fim_encontrado = False
-                    i = self.cols + 1
-                else: 
-                    self.fim_encontrado = True
-            cv2.imshow("output", np.hstack([self.mav2.cam, mask_tube])) #teste
-            cv2.waitKey(0)
-            
-        
-        contours, _ = cv2.findContours(
-            threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-        for contour in contours:
-            if i == 0:
-                i = 1
-                continue
-            # cv2.approxPloyDP() function to approximate the shape
-            approx = cv2.approxPolyDP(
-                contour, 0.01 * cv2.arcLength(contour, True), True)
-            
-            if len(approx) == 4:
-                M = cv2.moments(contour)
-                try: 
-                    self.cx_tube = int(M['m10']/M['m00']) #Passa o ponto do frame que foram encontradas os barcos
-                    self.cy_tube = int(M['m01']/M['m00'])
-                except ZeroDivisionError:
-                    continue
-                (cx, cy, self.tw, self.th) = cv2.boundingRect(approx)  
-
-        hight_f = (self.th**2 +self.tw**2)/2
-        hight_final_x = self.mav2.drone_pose.pose.position.x
-        hight_final_y = self.mav2.drone_pose.pose.position.y
-        hight_total = hight_i + hight_f + np.sqrt((hight_final_x-hight_saved_x)**2 + (hight_final_y - hight_saved_y)**2 )
-        self.tube_found = True
-        print("tube hight: " + hight_total + "m")
-        print("tube width: " + self.tw + "m")
-
-        self.mav2.go_to_local(current_x, current_y , 3)
-        self.tube_found = True    
- 
-    def mapping(self, x, y):
-        rclpy.spin_once(self.mav2)
-        current_z = self.mav2.drone_pose.pose.position.z
+    def mapping(self):
         j = 0  
-        for j in range(self.bases_visited):
-            print(self.bases_stored[j][1])
-            print(self.bases_stored[j][2])
-            if (abs(self.bases_stored[j][1] -x) - 0.2 <= TOL) and (abs(self.bases_stored[j][2] - y) - 0.2 <= TOL):
-                    self.ja_mapeada = True
-        if self.ja_mapeada == False:
-            self.mav2.hold(2)   
-            print("Base localizada: " + str(x) + " , " + str(y))
-            #   self.mav2.go_to_local(x, y, 3)
-            self.mav2.land()
-            rclpy.spin_once(self.mav2)
-            if self.bases_visited == 1:
-                self.bases_stored.append(["A", self.mav2.drone_pose.pose.position.x, self.mav2.drone_pose.pose.position.y, self.mav2.drone_pose.pose.position.z])
-                print("Base A visitada")
-            elif self.bases_visited == 2:
-                self.bases_stored.append(["B", self.mav2.drone_pose.pose.position.x, self.mav2.drone_pose.pose.position.y, self.mav2.drone_pose.pose.position.z])
-                print("Base B visitada")
-            elif self.bases_visited == 3:
-                self.bases_stored.append(["C", self.mav2.drone_pose.pose.position.x, self.mav2.drone_pose.pose.position.y, self.mav2.drone_pose.pose.position.z])
-                print("Base C visitada")
-            elif self.bases_visited == 4:
-                self.bases_stored.append(["D", self.mav2.drone_pose.pose.position.x, self.mav2.drone_pose.pose.position.y, self.mav2.drone_pose.pose.position.z])
-                print("Base D visitada")
-            elif self.bases_visited == 5:
-                self.bases_stored.append(["E", self.mav2.drone_pose.pose.position.x, self.mav2.drone_pose.pose.position.y, self.mav2.drone_pose.pose.position.z])
-                print("Base E visitada")
-            self.bases_visited += 1
-            time.sleep(2)
-            rclpy.spin_once(self.mav2)
-            self.mav2.takeoff(current_z - self.mav2.drone_pose.pose.position.z) #verificar se eh o quanto sobe ou em relacao ao inicio
-            self.mav2.hold(2) 
+        #   self.mav.go_to_local(x, y, 3)
+        self.mav.land()
+        time.sleep(10)
+        if self.bases_visited == 1:
+            self.bases_stored.append(["A", -4.05, -0.55, 1.0])
+            print("Base A visitada")
+        elif self.bases_visited == 2:
+            self.bases_stored.append(["B", -3.58, 7.02, 1.0])
+            print("Base B visitada")
+        elif self.bases_visited == 3:
+            print("Base C visitada")
+        elif self.bases_visited == 4:
+            print("Base D visitada")
+        elif self.bases_visited == 5:
+            print("Base E visitada")
+        self.bases_visited += 1
+        self.mav.takeoff(1.5)
+        rospy.sleep(7)       
         self.base_shortly = 0 
-        self.ja_mapeada = False 
 
-    def in_direction_bases(self, x, y, z):
-        rclpy.spin_once(self.mav2)
-        current_x = self.mav2.drone_pose.pose.position.x
-        current_y = self.mav2.drone_pose.pose.position.y
-        while(np.sqrt((x - current_x  )**2 + (y - current_y)**2)) > TOL:
-            if(self.base_shortly >= 500):
-                rclpy.spin_once(self.mav2)
-                current_x = self.mav2.drone_pose.pose.position.x
-                current_y = self.mav2.drone_pose.pose.position.y
-                bases_detected = self.base_detection(self.mav2.cam, [[0, 0, 0], [255, 255, 255], [0, 0, 0]])
-                print(bases_detected)
-                for new_base in bases_detected:  
-                    self.centralize_on_cross(self.mav2)
-                    rclpy.spin_once(self.mav2)
-                    current_x = self.mav2.drone_pose.pose.position.x
-                    current_y = self.mav2.drone_pose.pose.position.y
-                    self.mapping(current_x, current_y)
-            self.base_shortly += 1
-            if (self.base_shortly == 10000):
-                self.base_shortly = 5000
-            self.mav2.set_position(x, y, z) 
+    def in_direction_bases(self):
+        
+        # current_x = self.mav.drone_pose.pose.position.x
+        # current_y = self.mav.drone_pose.pose.position.y
+        # while(np.sqrt((x - current_x  )**2 + (y - current_y)**2)) > TOL:
+        #     if(self.base_shortly >= 500):
+                
+        #         current_x = self.mav.drone_pose.pose.position.x
+        #         current_y = self.mav.drone_pose.pose.position.y
+        #         bases_detected = self.base_detection(self.mav.cam, [[0, 0, 0], [255, 255, 255], [0, 0, 0]])
+        #         print(bases_detected)
+        #         for new_base in bases_detected:  
+        #             self.centralize_on_cross(self.mav)
+                    
+        #             current_x = self.mav.drone_pose.pose.position.x
+        #             current_y = self.mav.drone_pose.pose.position.y
+        #             self.mapping(current_x, current_y)
+        #     self.base_shortly += 1
+        #     if (self.base_shortly == 10000):
+        #         self.base_shortly = 500
+        #     self.mav.set_position(x, y, z) 
+ 
+        bases_detected = self.base_detection(self.mav.cam, [[0, 0, 0], [255, 255, 255], [0, 0, 0]])
+        print(bases_detected)
+        for new_base in bases_detected:  
+            self.centralize_on_cross(self.mav)
+            self.mapping()
+
+
+
+    def land_known_base(self, x, y):
+        self.mav.land()
+        time.sleep(10)
+        if x == self.bases_stored[1][1] and y == self.bases_stored[1][2]:
+            self.bases_stored.append(["A", -4.05, -0.55, 1.0])
+            print("Base A visitada")
+        elif x == self.bases_stored[2][1] and y == self.bases_stored[2][2]:
+            self.bases_stored.append(["B", -3.58, 7.02, 1.0])
+            print("Base B visitada")
+        self.bases_visited += 1 
+        self.mav.takeoff(self.altitude)  
+        rospy.sleep(7)       
 
     def in_direction_tube(self, x, y, z):
-        rclpy.spin_once(self.mav2)
-        current_x = self.mav2.drone_pose.pose.position.x
-        current_y = self.mav2.drone_pose.pose.position.y
-        while(np.sqrt((x - current_x  )**2 + (y - current_y)**2)) > TOL:
-            self.mav2.set_position(x, y, z)
+        pass
     
     def trajectory(self):
-        c_height = 2 - init_height
-        self.mav2.takeoff(c_height)
-        self.mav2.go_to_local(0, 0, c_height)
-        self.mav2.change_auto_speed(1.0)
-        self.bases_stored.append(["0", 0, 0, self.mav2.drone_pose.pose.position.z])
+        self.mav.takeoff(self.altitude)
+        rospy.sleep(7)
+        self.mav.change_auto_speed(0.5)
+        self.bases_stored.append(["0", 0, 0, INIT_HEIGHT])
         self.bases_visited += 1 
-        print(self.mav2.drone_pose.pose.position.x)
+        self.bases_stored.append(["A", -4.05, -0.55, 1.0])
+        self.bases_visited += 1 
+        self.bases_stored.append(["B", -3.58, 7.02, 1.0])
+        self.bases_visited += 1 
         
-        self.in_direction_bases(1.5, 0, c_height)
-        self.mav2.go_to_local(1.5, 0, c_height + 1.5)
-        self.in_direction_bases(4.5, 0, c_height + 1.5)
-        self.mav2.go_to_local(4.5, 0, c_height)
-        self.in_direction_bases(6.5, 0, c_height)
-        self.in_direction_bases(6.5, -2, c_height)
-        self.in_direction_bases(0, -2, c_height)
-        self.in_direction_bases(0, -4, c_height)
-        self.in_direction_bases(6.5, -4, c_height)
-        self.in_direction_bases(6.5, -6, c_height)
-        self.in_direction_bases(1.5, -6, c_height)
-        self.mav2.go_to_local(1.5, -6, c_height + 1.5)
-        self.in_direction_bases(0, -6, c_height + 1.5)   
-        self.mav2.go_to_local(0, 0, c_height + 1.5)
-        self.mav2.land()
+        self.go_to_local(0, -0.15, self.altitude, yaw=math.pi/2, sleep_time=5)
+        ############ quadrante 1 #############
+        self.go_to_local(-1.25, -0.15, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 1 #############
+        ############ quadrante 2 #############
+        self.go_to_local(-3.55, -0.15, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 2 #############
+        ######### Base aerea 1 ###########
+        self.mav.go_to_local(self.bases_stored[1][1], self.bases_stored[1][2], self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.land_known_base(self.bases_stored[1][1], self.bases_stored[1][2])
+        ######### fim base aerea 1 ##########
+        ############ quadrante 3 #############
+        self.go_to_local(-4,55, -0.15, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 3 #############
+        ############ quadrante 4 #############
+        self.go_to_local(-6,85, -0.15, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 4 #############
+        ############ quadrante 5 #############
+        self.go_to_local(-6,85, 2.05, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 5 #############
+        ############ quadrante 6 #############
+        self.go_to_local(-4,55, 2.05, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 6 #############
+        ############ quadrante 7 #############
+        self.go_to_local(-2.25, 2.05, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 7 #############
+        ############ quadrante 8 #############
+        self.go_to_local(0.05, 2.05, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 8 #############
+        ############ quadrante 9 #############
+        self.go_to_local(0.05, 4.25, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 9 #############
+        ############ quadrante 10 #############
+        self.go_to_local(-2.25, 4.25, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 10 #############
+        ############ quadrante 11 #############
+        self.go_to_local(-4,55, 4.25, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 11 #############
+        ############ quadrante 12 #############
+        self.go_to_local(-6,85, 4.25, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 12 #############
+        ############ quadrante 13 #############
+        self.go_to_local(-6,85, 6.45, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 13 #############
+        ############ quadrante 14 #############
+        self.go_to_local(-4,55, 6.45, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 14 #############
+        ######### Base area 2 ################
+        self.mav.go_to_local(self.bases_stored[2][1], self.bases_stored[2][2], self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.land_known_base()
+        ######### fim base aerea 1 ################ 
+        ############ quadrante 15 #############
+        self.go_to_local(-2.25, 6.45, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 15 #############
+        ############ quadrante 16 #############
+        self.go_to_local(0.05, 6.45, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.in_direction_bases()
+        ############ fim quadrante 16 #############
+
+        self.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=20)
+        self.mav.land()
+
+        # ######### Base aerea 1 ################
+        # self.mav.go_to_local(1.5, 0, self.altitude + 1.5)
+        # self.mav.go_to_local(2.75, 0.25, self.altitude + 1.5)
+        # self.land_known_base()
+        # self.mav.go_to_local(4.5, 0, self.altitude + 1.5)
+        # self.mav.go_to_local(4.5, 0, self.altitude)
+        # ######### fim base aerea 1 ################
+        # self.in_direction_bases(6.5, 0, self.altitude)
+        # self.in_direction_bases(6.5, -2, self.altitude)
+        # self.in_direction_bases(0, -2, self.altitude)
+        # self.in_direction_bases(0, -4, self.altitude)
+        # self.in_direction_bases(6.5, -4, self.altitude)
+        # self.in_direction_bases(6.5, -6, self.altitude)
+        # self.in_direction_bases(1.5, -6, self.altitude)
+        # ######### Base area 2 ################
+        # self.mav.go_to_local(1.5, -6, self.altitude + 1.5)
+        # self.mav.go_to_local(0.25,-6.25, self.altitude + 1.5)
+        # self.land_known_base()
+        # self.mav.go_to_local(0, -6, self.altitude + 1.5)
+        # ######### fim base aerea 1 ################ 
+        # self.mav.go_to_local(0, 0, self.altitude + 1.5)
+        # self.mav.land()
 
 if __name__ == "__main__":
-    rclpy.init()
+    rospy.init_node('fase1')
+    detection = CrossDetection()
     mav = MAV2()
-    missao = fase1(mav)
-    rclpy.spin_once(mav)
-    current_x = mav.drone_pose.pose.position.x
-    current_y = mav.drone_pose.pose.position.y
-    if current_x >= TOL or current_y >= TOL:
-        mav.go_to_local(0, 0, 3)
-    else:
-        # missao.teste()
-        missao.trajectory()
+    missao = fase1(mav, detection)
+    missao.trajectory()
     

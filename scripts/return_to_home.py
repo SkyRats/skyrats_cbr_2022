@@ -16,7 +16,7 @@ class return_to_home:
         self.mav.takeoff(1.0)
         time.sleep(7)
         self.mav.change_auto_speed(self.vel_cruzeiro)
-        self.mav.go_to_local(0, 0, 1.0, yaw=math.pi/2, sleep_time=10)
+        self.mav.go_to_local(0, 0, 1.0, yaw=math.pi/2, sleep_time=15)
         self.mav.land()
         time.sleep(10)
 

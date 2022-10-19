@@ -300,25 +300,25 @@ class MAV2():
 
 if __name__ == '__main__':
     rospy.init_node('mavbase2')
-    #mav = MAV2()
+    mav = MAV2()
+    mav.takeoff(0.5)
+    rospy.sleep(5)
+    #import tf
+    #listener = tf.TransformListener()
+    #while not rospy.is_shutdown():
+    #    try:
+    #        (trans,rot) = listener.lookupTransform('camera_odom_frame', 'camera_pose_frame', rospy.Time(0))
+    #        print("translation: " + str(trans))
+    #        print("rotation: " + str(rot))
+    #    except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+    #        continue
+    mav.change_auto_speed(0.25)
+    import math
+    mav.go_to_local(1,1,0.5,yaw=math.pi/2, sleep_time=10)
+    mav.land()
+    rospy.sleep(10)
     #mav.takeoff(1.2)
-    #rospy.sleep(5)
-    import tf
-    listener = tf.TransformListener()
-    while not rospy.is_shutdown():
-        try:
-            (trans,rot) = listener.lookupTransform('camera_odom_frame', 'camera_pose_frame', rospy.Time(0))
-            print("translation: " + str(trans))
-            print("rotation: " + str(rot))
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            continue
-    #mav.change_auto_speed(0.5)
-    #import math
-    #mav.go_to_local(1,0,1.2,yaw=math.pi/2)
-    #mav.go_to_local(0,1,1.2,yaw=math.pi/2)
-    #mav.go_to_local(0,0,2,yaw=math.pi/2)
+    #rospy.sleep(10)
+    #mav.go_to_local(0,0,1.2,yaw=math.pi/2,sleep_time=15)
     #mav.land()
 
-  
-
-    

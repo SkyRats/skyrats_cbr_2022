@@ -95,8 +95,8 @@ class tuboDetection:
         medidas_tubo , orange_image = self.getSquares(self.frame)
         
         
-        cv2.imshow('orange', orange_image)
-        cv2.imshow('Camera',self.frame)
+        #cv2.imshow('orange', orange_image)
+        #cv2.imshow('Camera',self.frame)
 
         
     

@@ -18,7 +18,7 @@ class displayDetection:
         # ver imagem rotacionada no teste, se ela ficar virada em 180 graus, vamos inverter
         # para o teste com a camera do drone, ela rotacionou certo 
 
-        self.cap = cv2.VideoCapture('/home/renato/Downloads/display.webm')
+        self.cap = cv2.VideoCapture(0)
         self.degrees = 0
         self.squares = []
         self.period = period
@@ -56,11 +56,11 @@ class displayDetection:
                 aspectRatio = float(w) / h
 
 
-                if aspectRatio >= 0.95 and aspectRatio < 1.1 and cv2.contourArea(contour) > 3000 and cv2.contourArea(contour) < 20000:
+                if aspectRatio >= 0.95 and aspectRatio < 1.1 and cv2.contourArea(contour) > 2000 and cv2.contourArea(contour) < 30000:
 
                     self.reshape = True
                     self.reshaped_image = four_point_transform(self.image, approx.reshape(4,2)) 
-                    #cv2.imshow("reshape", self.reshaped_image)
+                    cv2.imshow("reshape", self.reshaped_image)
                     
                     #self.squares.append(contour)
                     cv2.drawContours(self.image, [approx], 0, (255, 0, 0), 4)
@@ -99,6 +99,15 @@ class displayDetection:
 
     def crop_image(self):
 
+        #cv2.imshow("inteira", self.reshaped_image)
+        kernel = np.ones((5, 5), np.uint8)
+        dilated = cv2.dilate(self.reshaped_image, kernel)
+        erode = cv2.erode(dilated, (7,7), iterations=2)
+            #blurred = cv2.GaussianBlur(dilated, (3, 3), 0)
+            #canny = cv2.Canny(self.image,100,200)
+            #cv2.imshow("canny", canny)
+        
+
         x = np.where(self.reshaped_image > 0)[0]
         y = np.where(self.reshaped_image > 0)[1]
         x1 = np.min(x)
@@ -107,26 +116,26 @@ class displayDetection:
         y2 = np.max(y)
 
 
-        image_copy = self.reshaped_image.copy()
+        image_copy = erode.copy()
         cropped_image = image_copy[x1:x2, y1:y2]
         # cv2.imshow("inteira", self.reshaped_image)
         
         #crop the top side of the image (gas percentual)
-        cropped_image1 = cropped_image[round(cropped_image.shape[0]*0.02):round(cropped_image.shape[0]/2), round(cropped_image.shape[1]*0.08):round(cropped_image.shape[1]*0.65)]
+        cropped_image1 = cropped_image[round(cropped_image.shape[0]*0.02):round(cropped_image.shape[0]/2), round(cropped_image.shape[1]*0.075):round(cropped_image.shape[1]*0.65)]
         #cv2.imshow("crop", cropped_image1)
         #crop the bottom side of the image (gas percentual)
-        cropped_image2 = cropped_image[round(cropped_image.shape[0]/2):round(cropped_image.shape[0]*0.95), round(cropped_image.shape[1]*0.07):round(cropped_image.shape[1]*0.63)]
+        cropped_image2 = cropped_image[round(cropped_image.shape[0]/2):round(cropped_image.shape[0]*0.95), round(cropped_image.shape[1]*0.07):round(cropped_image.shape[1]*0.655)]
 
         #crop the first character of the gas percentual number
-        cropped_image3 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.04):round(cropped_image1.shape[1]*0.55)]
-        # cv2.imshow("crop1", cropped_image3)
+        cropped_image3 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.015):round(cropped_image1.shape[1]*0.55)]
+        #cv2.imshow("crop1", cropped_image3)
         #crop the second character of the gas percentual number
         cropped_image4 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.52):cropped_image1.shape[1]]
         
-        # cv2.imshow("crop2", cropped_image4)
+        #cv2.imshow("crop2", cropped_image4)
         #crop the zero adjustment number
         cropped_image5 = cropped_image2[0:cropped_image2.shape[0], round(cropped_image2.shape[1]*0.52):round(cropped_image2.shape[1]*0.99)]
-
+        #cv2.imshow("crop2", cropped_image5)
     
         #crop the image that may contain 1 or not
         cropped_image6 = cropped_image2[0:round(cropped_image2.shape[0]*0.90), round(cropped_image2.shape[1]*0.40):round(cropped_image2.shape[1]*0.51)]
@@ -152,7 +161,7 @@ class displayDetection:
     def OCR(self, image):
 
         result = self.reader.readtext(image)
-        # print(result)
+        #print(result)
         # print(number)
 
         if result:
@@ -190,50 +199,72 @@ class displayDetection:
         # M = cv2.getRotationMatrix2D((cX, cY), self.degrees, 1.0)
         # self.reshaped_image = cv2.warpAffine(self.reshaped_image, M, (w, h))
         
+        rotated = self.reshaped_image
 
         while (not finded) and i < 4:
 
             top = False
             bot = False
-
+            circlesTop = None
+            circlesBot = None
+            #rotated = self.reshaped_image
             gray = cv2.cvtColor(self.reshaped_image, cv2.COLOR_BGR2GRAY)
-            ret, thresh = cv2.threshold(gray, 110, 255, cv2.CHAIN_APPROX_TC89_L1)
+            blurred = cv2.blur(gray, (3,3))
+            ret, thresh = cv2.threshold(blurred, 110, 255, cv2.CHAIN_APPROX_TC89_L1)
+            contours,h = cv2.findContours(thresh,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_NONE)
+
             canny = cv2.Canny(self.reshaped_image, 100, 200)
-            topPiece = canny[0:round(thresh.shape[0]/2), round(thresh.shape[1]*0.61):round(thresh.shape[1]*0.95)]
-            bottomPiece = canny[round(thresh.shape[0]/2):round(thresh.shape[0]*0.95), round(thresh.shape[1]*0.61):round(thresh.shape[1]*0.95)]
-            # cv2.imshow("percentage1", topPiece)
-            # cv2.imshow("percentage2", bottomPiece)
+            topPiece = thresh[0:round(thresh.shape[0]/2), round(thresh.shape[1]*0.5):round(thresh.shape[1])]
+            bottomPiece = thresh[round(thresh.shape[0]/2):round(thresh.shape[0]), round(thresh.shape[1]*0.5):round(thresh.shape[1])]
 
-            circlesTop = cv2.HoughCircles(topPiece,cv2.HOUGH_GRADIENT,4,20, param1=50,param2=30,minRadius=0,maxRadius=0)
-            circlesBot = cv2.HoughCircles(bottomPiece,cv2.HOUGH_GRADIENT,4,20, param1=50,param2=30,minRadius=0,maxRadius=0)
+            contoursTop,h = cv2.findContours(topPiece,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_NONE)
+            contoursBot,h = cv2.findContours(bottomPiece,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_NONE)
 
-            if circlesTop is not None:
+            #cv2.imshow("percentage1", topPiece)
+            #cv2.imshow("percentage2", bottomPiece)
+            
+            for cnt in contoursTop:
 
-                top = True
+                approx = cv2.approxPolyDP(cnt, .03 * cv2.arcLength(cnt, True), True)
+        
+                if len(approx)==8:
 
-            if circlesBot is not None:
+                    k = cv2.isContourConvex(approx)
+                    if k:
+                        cv2.drawContours(topPiece, [cnt], 0, (220, 152, 91), -1)
+                        top = True
+                                     
+            for cnt in contoursBot:
 
-                bot = True
+                approx = cv2.approxPolyDP(cnt, .03 * cv2.arcLength(cnt, True), True)
+        
+                if len(approx)==8:
+
+                    k = cv2.isContourConvex(approx)
+                    if k:
+
+                        cv2.drawContours(bottomPiece, [cnt], 0, (220, 152, 91), -1)
+                        bot = True
 
             if bot and top:
 
                 finded = True
-
+            
             else:
                 
                 
-                (h, w) = self.reshaped_image.shape[:2]
+                (h, w) = rotated.shape[:2]
                 (cX, cY) = (w // 2, h // 2)
 
                 M = cv2.getRotationMatrix2D((cX, cY), 90, 1.0)
                 self.reshaped_image = cv2.warpAffine(self.reshaped_image, M, (w, h))
                 # rotated = rotate_bound(self.reshaped_image,-90)
                 # self.reshaped_image=rotated 
-                cv2.imshow("Rotated by -90 Degrees", self.reshaped_image)
+                #print("cheguei")
+                #cv2.imshow("Rotated by 180 Degrees", rotated)
                 
                 i = i + 1
-            
-
+                     
             if cv2.waitKey(5) & 0xFF == 27:
                 break
 
@@ -241,7 +272,7 @@ class displayDetection:
 
 
             # self.degrees = i*90
-
+            
             return True
 
         else:
@@ -296,7 +327,7 @@ class displayDetection:
             # obj.convert(img_out)
             
             self.image = self.image.convert(img_out)
-            # cv2.imshow("oi",img_out)
+            #cv2.imshow("oi",img_out)
             # self.image = cv2.resize(self.image, (1280,720))
             kernel = np.ones((3, 3), np.uint8)
             dilated = cv2.dilate(self.image, kernel)
@@ -371,7 +402,7 @@ class displayDetection:
                 #     self.gas_percentual_list2.append(1)
 
                 else:
-                    oneGasPercentual1 = self.isEmpty(self.gas_percentual_image[1], 0.13)
+                    oneGasPercentual1 = self.isEmpty(self.gas_percentual_image[1], 0.2)
                     if len(self.squares)==(i+1) and oneGasPercentual1:
                         self.gas_percentual_list2.append(1)
                         
@@ -390,7 +421,7 @@ class displayDetection:
                     
 
                 else: 
-                    oneZeroAdj = self.isEmpty(self.zero_adjustment_image, 0.12)
+                    oneZeroAdj = self.isEmpty(self.zero_adjustment_image, 0.2)
                     if len(self.squares)==(i+1) and oneZeroAdj:
 
                         self.zero_adjustment =1
@@ -438,6 +469,8 @@ class displayDetection:
                 return self.zero_adjustment
 
         if (self.parameter==3):
+
+            
             return self.result
         
         else:
@@ -447,10 +480,10 @@ class displayDetection:
 
             
     def main_interface(self):
-        #time.sleep(3)
+        
         result = self.detection_loop()
         return result
 
-detection = displayDetection(20,3)
+detection = displayDetection(15,3)
 result = detection.main_interface()
 print(result)

@@ -152,9 +152,6 @@ class MAV2():
             self.goal_pose.pose.orientation.w] = quaternion_from_euler(0,0,yaw) #roll,pitch,yaw
             #print("X: " + str(self.goal_pose)))
 
-        while self.drone_state.mode != "GUIDED":
-            self.local_position_pub.publish(self.goal_pose)
-            self.set_mode("GUIDED")
         self.local_position_pub.publish(self.goal_pose)
 
     def set_position_target(self, x_position=0, y_position=0, z_position=0, x_velocity=0, y_velocity=0, z_velocity=0, x_aceleration=0, y_aceleration=0, z_aceleration=0, yaw=0, yaw_rate=0, coordinate_frame = PositionTarget.FRAME_LOCAL_NED, type_mask=0b1111110111111000):
@@ -220,15 +217,6 @@ class MAV2():
 
 
     def set_vel(self, x, y, z, yaw = 0):
-        while self.drone_state.mode != "GUIDED":
-            self.goal_vel.twist.linear.x = float(x)
-            self.goal_vel.twist.linear.y = float(y)
-            self.goal_vel.twist.linear.z = float(z)
-
-            self.goal_vel.twist.angular.z = float(yaw)
-            self.velocity_pub.publish(self.goal_vel)  
-            self.set_mode("GUIDED")
-
         self.goal_vel.twist.linear.x = float(x)
         self.goal_vel.twist.linear.y = float(y)
         self.goal_vel.twist.linear.z = float(z)

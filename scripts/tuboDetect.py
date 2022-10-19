@@ -11,12 +11,13 @@ TOL = 30
 class tuboDetection:
     
     def __init__(self):
-        self.capture = cv2.VideoCapture("./tubo.webm")
+        self.capture = cv2.VideoCapture(0)
         self.redSquaresCount = 0
         self.orangeSquaresCount = 0
         self.orangeRecord = [0 for i in range(TOL)]
         self.tuboDetected = False
-        self.fatorDeCorrecao = 1
+        self.fatorDeCorrecaoWidth = 1.29
+        self.fatorDeCorrecaoHeight = 0.714
         
         
     def get_mask(self, hsv , lower_color , upper_color):
@@ -44,8 +45,12 @@ class tuboDetection:
                     temp = h
                     h = w
                     w = temp
-                print(f"Comprimento do tubo : {w * self.fatorDeCorrecao}")
-                print(f"Largura do tubo : {h * self.fatorDeCorrecao}")
+
+                w = round(w * self.fatorDeCorrecaoWidth,2)
+                h = round(h * self.fatorDeCorrecaoHeight,2)
+                print(f"Comprimento do tubo : {w} cm")
+                print(f"Largura do tubo : {h } cm")
+                cv2.imwrite("./tuboMask.png", img)
                 self.tuboDetected = True
         
         return None
@@ -117,4 +122,5 @@ if __name__ == "__main__":
     cv2.destroyAllWindows()
 
     cv2.waitKey(0)
+    
     

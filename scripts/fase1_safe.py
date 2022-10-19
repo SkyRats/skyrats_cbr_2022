@@ -7,8 +7,7 @@ import time
 import math
 from MAV_ardupilot import MAV2
 
-
-TOL = 0.5 #tolerancia de erro das bases 
+ 
 INIT_HEIGHT = 0.5
 
 # [self.mav.drone_pose.pose.position.x, self.mav.drone_pose.pose.position.y, self.mav.drone_pose.pose.position.z]
@@ -22,7 +21,7 @@ class fase1:
         self.mav = mav
         
         # velocidade de cruzeiro
-        self.vel_cruzeiro = 0.2
+        self.vel_cruzeiro = 0.5
 
         # altura do voo em relação ao tamanho incial da base costeira
         self.altitude = 1.5 - INIT_HEIGHT
@@ -43,7 +42,7 @@ class fase1:
         self.bases_visited += 1 
         self.bases_stored.append(["A", -4.05, -0.55, 1.0])
         self.bases_visited += 1 
-        self.bases_stored.append(["B", -3.58, 7.02, 1.0])
+        self.bases_stored.append(["B", -3.58, 7.00, 1.0])
         self.bases_visited += 1 
 
         self.mav.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=2)

@@ -31,7 +31,7 @@ class fase1:
     def land_known_base(self):
         self.mav.land()
         time.sleep(10)
-        self.mav.takeoff(0.5) 
+        self.mav.takeoff(self.altitude) 
         rospy.sleep(7)
 
 
@@ -46,19 +46,17 @@ class fase1:
         self.bases_stored.append(["B", -3.58, 7.02, 1.0])
         self.bases_visited += 1 
 
-        self.mav.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=10)
+        self.mav.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=2)
         ######### Base aerea 1 ################
         self.mav.go_to_local(self.bases_stored[1][1], self.bases_stored[1][2], self.altitude, yaw=math.pi/2, sleep_time=10)
         self.land_known_base()
-        self.mav.go_to_local(self.bases_stored[1][1], self.bases_stored[1][2], self.altitude, yaw=math.pi/2, sleep_time=10)
         ######### fim base aerea 1 ################
 
         ######### Base area 2 ################
-        self.mav.go_to_local(self.bases_stored[2][1], self.bases_stored[2][2], self.altitude, yaw=math.pi/2, sleep_time=10)
+        self.mav.go_to_local(self.bases_stored[2][1], self.bases_stored[2][2], self.altitude, yaw=math.pi/2, sleep_time=20)
         self.land_known_base()
-        self.mav.go_to_local(self.bases_stored[2][1], self.bases_stored[2][2], self.altitude, yaw=math.pi/2, sleep_time=10)
         ######### fim base aerea 1 ################ 
-        self.mav.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=10)
+        self.mav.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=20)
         self.mav.land()
 
 if __name__ == "__main__":
@@ -66,8 +64,3 @@ if __name__ == "__main__":
     mav = MAV2()
     missao = fase1(mav)
     missao.trajectory()
-    
-
-
-
-    

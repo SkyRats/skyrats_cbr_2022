@@ -1,4 +1,4 @@
- #!/usr/bin/env python3
+#!/usr/bin/env python3
 from jinja2 import pass_eval_context
 from baseDetector import CrossDetection
 import cv2
@@ -240,82 +240,47 @@ class fase1:
         self.bases_visited += 1 
         self.bases_stored.append(["B", -3.58, 7.02, 1.0])
         self.bases_visited += 1 
+
+
+        ############ andar 2.30 ###########
+        ######## largura 627 ####### 3 partes de 209
+        ######## 0.045 ####
+        ######## 2.135 
+        ######## 4.225
+
+        ######## comprimento 705.5 ###### 3 partes 235.166667
+        ##### -0.675
+        ##### -3.025
+        ##### -5.375
+
         
-        self.go_to_local(0, -0.15, self.altitude, yaw=math.pi/2, sleep_time=5)
+        self.go_to_local(0, 0.045, self.altitude, yaw=math.pi/2, sleep_time=2)
         ############ quadrante 1 #############
-        self.go_to_local(-1.25, -0.15, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.go_to_local(-3.025, 0.045, self.altitude, yaw=math.pi/2, sleep_time=7)
         self.in_direction_bases()
         ############ fim quadrante 1 #############
         ############ quadrante 2 #############
-        self.go_to_local(-3.55, -0.15, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.go_to_local(-5.375, 2.135, self.altitude, yaw=math.pi/2, sleep_time=10)
         self.in_direction_bases()
         ############ fim quadrante 2 #############
-        ######### Base aerea 1 ###########
-        self.mav.go_to_local(self.bases_stored[1][1], self.bases_stored[1][2], self.altitude, yaw=math.pi/2, sleep_time=7)
-        self.land_known_base(self.bases_stored[1][1], self.bases_stored[1][2])
-        ######### fim base aerea 1 ##########
         ############ quadrante 3 #############
-        self.go_to_local(-4,55, -0.15, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.go_to_local(-3.025, 2.135, self.altitude, yaw=math.pi/2, sleep_time=7)
         self.in_direction_bases()
         ############ fim quadrante 3 #############
         ############ quadrante 4 #############
-        self.go_to_local(-6,85, -0.15, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.go_to_local(-3.025, 4.225, self.altitude, yaw=math.pi/2, sleep_time=7)
         self.in_direction_bases()
         ############ fim quadrante 4 #############
         ############ quadrante 5 #############
-        self.go_to_local(-6,85, 2.05, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.go_to_local(-0.675, 4.225, self.altitude, yaw=math.pi/2, sleep_time=7)
         self.in_direction_bases()
         ############ fim quadrante 5 #############
         ############ quadrante 6 #############
-        self.go_to_local(-4,55, 2.05, self.altitude, yaw=math.pi/2, sleep_time=7)
+        self.go_to_local(-0.675, 2.135, self.altitude, yaw=math.pi/2, sleep_time=7)
         self.in_direction_bases()
-        ############ fim quadrante 6 #############
-        ############ quadrante 7 #############
-        self.go_to_local(-2.25, 2.05, self.altitude, yaw=math.pi/2, sleep_time=7)
-        self.in_direction_bases()
-        ############ fim quadrante 7 #############
-        ############ quadrante 8 #############
-        self.go_to_local(0.05, 2.05, self.altitude, yaw=math.pi/2, sleep_time=7)
-        self.in_direction_bases()
-        ############ fim quadrante 8 #############
-        ############ quadrante 9 #############
-        self.go_to_local(0.05, 4.25, self.altitude, yaw=math.pi/2, sleep_time=7)
-        self.in_direction_bases()
-        ############ fim quadrante 9 #############
-        ############ quadrante 10 #############
-        self.go_to_local(-2.25, 4.25, self.altitude, yaw=math.pi/2, sleep_time=7)
-        self.in_direction_bases()
-        ############ fim quadrante 10 #############
-        ############ quadrante 11 #############
-        self.go_to_local(-4,55, 4.25, self.altitude, yaw=math.pi/2, sleep_time=7)
-        self.in_direction_bases()
-        ############ fim quadrante 11 #############
-        ############ quadrante 12 #############
-        self.go_to_local(-6,85, 4.25, self.altitude, yaw=math.pi/2, sleep_time=7)
-        self.in_direction_bases()
-        ############ fim quadrante 12 #############
-        ############ quadrante 13 #############
-        self.go_to_local(-6,85, 6.45, self.altitude, yaw=math.pi/2, sleep_time=7)
-        self.in_direction_bases()
-        ############ fim quadrante 13 #############
-        ############ quadrante 14 #############
-        self.go_to_local(-4,55, 6.45, self.altitude, yaw=math.pi/2, sleep_time=7)
-        self.in_direction_bases()
-        ############ fim quadrante 14 #############
-        ######### Base area 2 ################
-        self.mav.go_to_local(self.bases_stored[2][1], self.bases_stored[2][2], self.altitude, yaw=math.pi/2, sleep_time=7)
-        self.land_known_base()
-        ######### fim base aerea 1 ################ 
-        ############ quadrante 15 #############
-        self.go_to_local(-2.25, 6.45, self.altitude, yaw=math.pi/2, sleep_time=7)
-        self.in_direction_bases()
-        ############ fim quadrante 15 #############
-        ############ quadrante 16 #############
-        self.go_to_local(0.05, 6.45, self.altitude, yaw=math.pi/2, sleep_time=7)
-        self.in_direction_bases()
-        ############ fim quadrante 16 #############
+         ############ fim quadrante 6 #############
 
-        self.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=20)
+        self.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=7)
         self.mav.land()
 
         # ######### Base aerea 1 ################

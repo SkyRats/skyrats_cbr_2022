@@ -1,89 +1,81 @@
+#!/usr/bin/env python3
 import cv2
-import rclpy
+import rospy
 import numpy as np
-from pickle import FALSE
 import time
-
-import sys
-import os
-sys.path.insert(0,'/home/' + os.environ["USER"] + '/skyrats_ws2/src/mavbase2')
-from MAV2 import MAV2
-
-from tf_transformations import quaternion_from_euler, euler_from_quaternion
+import math
+from MAV_ardupilot import MAV2
+from plaquinha_classe import Buzzer
+from sensorDetector import sensorDetection
 
 TOL = 0.5 #tolerancia de erro das bases 
-CAM_FOV = 1.64061 #94 graus
+INIT_HEIGHT = 0.5
 
 class fase3:
-    def __init__(self, mav2):
-        self.mav2 = mav2
+    def __init__(self, mav):
+        self.mav = mav
         self.bases_not_visited=[]
-        self.bases_visited=[]
-        self.altura = 3
-    #def precision_land(self):   
-  
-    #def findDisplay(self, mask_tube): 
-    
-    #def readDisplay(self, mask_tube):
+        
+        # altura do voo em relação ao tamanho incial da base costeira
+        self.altitude = 1.5 - INIT_HEIGHT
+
+        # velocidade de cruzeiro
+        self.vel_cruzeiro = 0.5
+
  
     def trajectory(self):
 
-        rclpy.spin_once(self.mav2) 
-        self.mav2.takeoff(self.altura)
-        current_x = self.mav2.drone_pose.pose.position.x
-        current_y = self.mav2.drone_pose.pose.position.y
-        dist_menor=8*(2**(1/2))
+        base1=(-4.05, -0.55, 1)
+        base2=(-6, 2, 0)
+        base3=(-4, 5, 0)
+        base4=(-3.58, 7.02, 1)
+        base5=(-2, 6, 0)
+
+        self.bases_not_visited.append(base1)
+        self.bases_not_visited.append(base2)
+        self.bases_not_visited.append(base3)
+        self.bases_not_visited.append(base4)
+        self.bases_not_visited.append(base5)     
         qtdade_bases_visited = 0
-
-
-        self.bases_not_visited.append([0.25, -6.25, 1])
-        self.bases_not_visited.append([2.75, 0.25, 1.5])
-        self.bases_not_visited.append([4, -3.5, 0])
-        self.bases_not_visited.append([6, -2, 0])
-        self.bases_not_visited.append([6, -6.5, 0])
-
+        self.mav.takeoff(self.altitude) 
+        rospy.sleep(7)
         while(qtdade_bases_visited!=5):
-            rclpy.spin_once(self.mav2) 
-            current_x = self.mav2.drone_pose.pose.position.x
-            current_y = self.mav2.drone_pose.pose.position.y
-            for i in range(0,len(self.bases_not_visited)):
-                
-                if self.bases_not_visited[i] not in self.bases_visited:
-                    print("entrei")
-                  
-                    X=self.bases_not_visited[i][0]
-                    Y=self.bases_not_visited[i][1]
 
-
-                    dist=np.sqrt((X- current_x)**2 + (Y - current_y)**2)
-
-                    if dist<dist_menor:
-                        dist_menor=dist
-                        i_oficial=i
-            dist_menor = 8*(2**(1/2))
-            self.mav2.go_to_local(current_x, current_y, 3)
-            self.mav2.go_to_local(self.bases_not_visited[i_oficial][0],self.bases_not_visited[i_oficial][1], 3)
-            self.mav2.go_to_local(self.bases_not_visited[i_oficial][0],self.bases_not_visited[i_oficial][1], self.bases_not_visited[i_oficial][2] + 0.5)
-            self.bases_visited.append(self.bases_not_visited[i_oficial]) 
-            # print(self.bases_visited)       
+            self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=10)
+            self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.bases_not_visited[qtdade_bases_visited][2] + 0.5,  yaw=math.pi/2, sleep_time=10)     
+            rospy.sleep(3)
+            self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=10)
             qtdade_bases_visited += 1
-        rclpy.spin_once(self.mav2) 
-        current_x = self.mav2.drone_pose.pose.position.x
-        current_y = self.mav2.drone_pose.pose.position.y    
-        self.mav2.go_to_local(current_x, current_y, 3)
-        self.mav2.go_to_local(0, 0, 3)
-        self.mav2.land()
-            
+   
+        self.mav.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=10)
+        self.mav.land()
+        
+        # current_x = 0
+        # current_y = 0
+        # while(qtdade_bases_visited!=5):
+        #     for i in range(0,len(self.bases_not_visited)):
+        #         if self.bases_not_visited[i] not in self.bases_visited:
+        #             print("entrei")
+        #             X=self.bases_not_visited[i][0]
+        #             Y=self.bases_not_visited[i][1]
+        #             dist=np.sqrt((X- current_x)**2 + (Y - current_y)**2)
+        #             if dist<dist_menor:
+        #                 dist_menor=dist
+        #                 i_oficial=i
+        #     dist_menor = 8*(2**(1/2))
+        #     self.mav2.go_to_local(current_x, current_y, 3,  yaw=math.pi/2, sleep_time=10)
+        #     self.mav2.go_to_local(self.bases_not_visited[i_oficial][0],self.bases_not_visited[i_oficial][1], 3, yaw=math.pi/2, sleep_time=10)
+        #     self.mav2.go_to_local(self.bases_not_visited[i_oficial][0],self.bases_not_visited[i_oficial][1], self.bases_not_visited[i_oficial][2] + 0.5, yaw=math.pi/2, sleep_time=10)
+        #     current_x = self.bases_not_visited[i_oficial][0]
+        #     current_y = self.bases_not_visited[i_oficial][1]
+        #     self.bases_visited.append(self.bases_not_visited[i_oficial]) 
+        #     qtdade_bases_visited += 1 
+        # self.mav2.go_to_local(current_x, current_y, 3, yaw=math.pi/2, sleep_time=10)
+        # self.mav2.go_to_local(0, 0, 3, yaw=math.pi/2, sleep_time=10)
+        # self.mav2.land()            
 
 if __name__ == "__main__":
-    rclpy.init()
+    rospy.init_node('fase2')
     mav = MAV2()
     missao = fase3(mav)
-    rclpy.spin_once(mav)
-    current_x = mav.drone_pose.pose.position.x
-    current_y = mav.drone_pose.pose.position.y
-    if current_x >= TOL or current_y >= TOL:
-        mav.go_to_local(0, 0, 3)
-    else:
-        # missao.teste()
-        missao.trajectory()
+    missao.trajectory()

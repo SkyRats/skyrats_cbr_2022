@@ -13,14 +13,15 @@ def centralize_on_cross(drone):
     drone -> MAV2 object
 
     '''
-
+    print("here")
     detection = CrossDetection()
+    print("here2")
     vs = cv2.VideoCapture(0)
-
-    TARGET = (int(vs.read().shape[1]/2), int(drone.read().shape[0]/2))
+    _,frame = vs.read()
+    TARGET = (int(frame.shape[1]/2), int(frame.shape[0]/2))
 
     is_centralized = False
-    while not is_centralized:
+    while not is_centralized and not rospy.is_shutdown():
         
         # Loop over frames to search for markers
         # If no markers were found, tries to shake the drone
@@ -28,7 +29,7 @@ def centralize_on_cross(drone):
         timer = 0
         no_detection = 0
         
-        while not cross_detected:
+        while not cross_detected and not rospy.is_shutdown():
             
             parameters = [[0, 0, 0], [255, 255, 255], [1, 0, 0]]
 
@@ -61,7 +62,8 @@ def centralize_on_cross(drone):
         drone.camera_pid(delta_x, delta_y, 0)
 
         # End centralization if the marker is close enough to the camera center
-        if ((delta_x)**2 + (delta_y)**2)**0.5 < 100:
+
+        if ((delta_x)**2 + (delta_y)**2)**0.5 < 80:
             # drone.set_vel(0, 0, 0)
             is_centralized = True
             print(f"Centralized! x: {delta_x} y: {delta_y}")
@@ -80,4 +82,7 @@ if __name__ == '__main__':
     mav = MAV2()
     mav.takeoff(1.5)
     rospy.sleep(5)
+    print("centralize on cross")
     centralize_on_cross(mav)
+    print("out of cross")
+    mav.land()

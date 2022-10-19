@@ -18,7 +18,7 @@ class displayDetection:
         # ver imagem rotacionada no teste, se ela ficar virada em 180 graus, vamos inverter
         # para o teste com a camera do drone, ela rotacionou certo 
 
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture('/home/renato/Downloads/display1.avi')
         self.degrees = 0
         self.squares = []
         self.period = period
@@ -100,9 +100,9 @@ class displayDetection:
     def crop_image(self):
 
         #cv2.imshow("inteira", self.reshaped_image)
-        kernel = np.ones((5, 5), np.uint8)
+        kernel = np.ones((3, 3), np.uint8)
         dilated = cv2.dilate(self.reshaped_image, kernel)
-        erode = cv2.erode(dilated, (7,7), iterations=2)
+        erode = cv2.erode(dilated, (5,5))
             #blurred = cv2.GaussianBlur(dilated, (3, 3), 0)
             #canny = cv2.Canny(self.image,100,200)
             #cv2.imshow("canny", canny)
@@ -118,24 +118,24 @@ class displayDetection:
 
         image_copy = erode.copy()
         cropped_image = image_copy[x1:x2, y1:y2]
-        # cv2.imshow("inteira", self.reshaped_image)
+        cv2.imshow("inteira", self.reshaped_image)
         
         #crop the top side of the image (gas percentual)
-        cropped_image1 = cropped_image[round(cropped_image.shape[0]*0.02):round(cropped_image.shape[0]/2), round(cropped_image.shape[1]*0.075):round(cropped_image.shape[1]*0.65)]
+        cropped_image1 = cropped_image[round(cropped_image.shape[0]*0.02):round(cropped_image.shape[0]*0.57), 0:round(cropped_image.shape[1]*0.65)]
         #cv2.imshow("crop", cropped_image1)
         #crop the bottom side of the image (gas percentual)
-        cropped_image2 = cropped_image[round(cropped_image.shape[0]/2):round(cropped_image.shape[0]*0.95), round(cropped_image.shape[1]*0.07):round(cropped_image.shape[1]*0.655)]
+        cropped_image2 = cropped_image[round(cropped_image.shape[0]/2):round(cropped_image.shape[0]), round(cropped_image.shape[1]*0.06):round(cropped_image.shape[1]*0.66)]
 
         #crop the first character of the gas percentual number
-        cropped_image3 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.015):round(cropped_image1.shape[1]*0.55)]
-        #cv2.imshow("crop1", cropped_image3)
+        cropped_image3 = cropped_image1[0:cropped_image1.shape[0], 0:round(cropped_image1.shape[1]*0.54)]
+        cv2.imshow("crop1", cropped_image3)
         #crop the second character of the gas percentual number
-        cropped_image4 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.52):cropped_image1.shape[1]]
+        cropped_image4 = cropped_image1[0:cropped_image1.shape[0], round(cropped_image1.shape[1]*0.52):round(cropped_image1.shape[1]*0.99)]
         
         #cv2.imshow("crop2", cropped_image4)
         #crop the zero adjustment number
-        cropped_image5 = cropped_image2[0:cropped_image2.shape[0], round(cropped_image2.shape[1]*0.52):round(cropped_image2.shape[1]*0.99)]
-        #cv2.imshow("crop2", cropped_image5)
+        cropped_image5 = cropped_image2[0:cropped_image2.shape[0], round(cropped_image2.shape[1]*0.49):round(cropped_image2.shape[1])]
+        cv2.imshow("crop2", cropped_image5)
     
         #crop the image that may contain 1 or not
         cropped_image6 = cropped_image2[0:round(cropped_image2.shape[0]*0.90), round(cropped_image2.shape[1]*0.40):round(cropped_image2.shape[1]*0.51)]
@@ -143,8 +143,8 @@ class displayDetection:
         #crop the image that may contain "-" or not
         cropped_image7 = cropped_image2[round(cropped_image2.shape[0]*0.43):round(cropped_image2.shape[0]*0.57), round(cropped_image2.shape[1]*0.055):round(cropped_image2.shape[1]*0.36)]
 
-        # cv2.imshow("minus", cropped_image7)
-        # cv2.imshow("one", cropped_image6)
+        cv2.imshow("minus", cropped_image7)
+        cv2.imshow("one", cropped_image6)
         
         #append the numbers images in their lists
 
@@ -161,7 +161,7 @@ class displayDetection:
     def OCR(self, image):
 
         result = self.reader.readtext(image)
-        #print(result)
+        print(result)
         # print(number)
 
         if result:
@@ -169,7 +169,7 @@ class displayDetection:
             content = result[0][1]
             accuracy = result[0][2]
 
-            if accuracy > 0.85 and self.checkInt(content):
+            if accuracy > 0.80 and self.checkInt(content):
                 
                 return [content, accuracy]
 
@@ -285,14 +285,15 @@ class displayDetection:
 
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        ret, thresh = cv2.threshold(gray, 110, 255, cv2.CHAIN_APPROX_NONE)
+        ret, thresh = cv2.threshold(gray, 120, 255, cv2.CHAIN_APPROX_NONE)
         # if(image.shape == self.one_image.shape):
         #     cv2.imshow("thresh funcao", thresh)
 
         total = thresh.size
         zero = total - np.count_nonzero(thresh)
         ratio = zero/total
-
+        if (image.shape == self.one_image.shape):
+            print(ratio)
         
     
         if ratio > tolerance:
@@ -375,8 +376,8 @@ class displayDetection:
                 self.gas_percentual = [self.OCR(self.gas_percentual_image[0])[0], self.OCR(self.gas_percentual_image[1])[0]]                
                 self.zero_adjustment = self.OCR(self.zero_adjustment_image)[0]
 
-                one = self.isEmpty(self.one_image, 0.2)
-                minus = self.isEmpty(self.minus_image, 0.2)
+                one = self.isEmpty(self.one_image, 0.35)
+                minus = self.isEmpty(self.minus_image, 0.35)
 
 
                 if self.gas_percentual[0]:

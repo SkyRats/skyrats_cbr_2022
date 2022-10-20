@@ -10,7 +10,7 @@ from imutils.perspective import four_point_transform
 
 class displayDetection:
     
-    def __init__(self,period, parameter):
+    def __init__(self,period):
 
         # period eh o intervalo de tempo para medir (limite da competicao ou oq vcs decidirem)
         # parameter eh a informacao que vcs querem, 1 = gas, 2 = zero adj e 3 = array com os dois
@@ -22,7 +22,6 @@ class displayDetection:
         self.degrees = 0
         self.squares = []
         self.period = period
-        self.parameter = parameter
         self.gas_percentual_list1 = []
         self.gas_percentual_list2=[]
         self.zero_adjustment_list = []
@@ -451,32 +450,18 @@ class displayDetection:
             self.gas_percentual[1]=mode(self.gas_percentual_list2)
 
             self.gasPercentual = int(str(self.gas_percentual[0]) + str(self.gas_percentual[1]))
-            print("Gas Percentual: " + str(self.gasPercentual) + "%")
 
-            self.result.append(self.gasPercentual)
-            
-            if(self.parameter ==1):
-                return self.gasPercentual
 
         if(len(self.zero_adjustment_list)!=0):
 
-            self.zero_adjustment=mode(self.zero_adjustment_list)
+            self.zero_adjustment=int(mode(self.zero_adjustment_list))
 
-            print("Zero Adjustment: " +str(self.zero_adjustment) + "%")
 
-            self.result.append(self.zero_adjustment)
+        return self.gasPercentual,self.zero_adjustment
 
-            if(self.parameter==2):
-                return self.zero_adjustment
-
-        if (self.parameter==3):
-
-            
-            return self.result
-        
         else:
 
-            return False
+            return 0,100
 
 
             
@@ -485,6 +470,7 @@ class displayDetection:
         result = self.detection_loop()
         return result
 
-detection = displayDetection(15,3)
-result = detection.main_interface()
-print(result)
+# detection = displayDetection(15)
+# result = detection.main_interface()
+# print(result)
+

@@ -7,7 +7,7 @@ import math
 from MAV_ardupilot import MAV2
 from plaquinha_classe import Buzzer,Led
 from sensorDetector import sensorDetection
-from displayDetection: import displayDetection:
+from qrDetection import QRDetection
 
 TOL = 0.5 #tolerancia de erro das bases 
 INIT_HEIGHT = 0.5
@@ -51,35 +51,16 @@ class fase3:
 
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=10)
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.bases_not_visited[qtdade_bases_visited][2] + 0.5,  yaw=math.pi/2, sleep_time=4)
-            self.gas,self.ajuste=self.detection.main_interface()
-            if(self.ajuste==100):
-                print("display não detectado")
+            capture = cv2.VideoCapture(0)
+            capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            qr_result = self.detection.qrdetection(capture)
+            if not self.detection.detected:
+                print("qr code nao detectado")
 
             else:
-                print("Gas percentual: " + self.gas)
-                if(self.gas<=55 and self.gas>=45):
-                    print("esta em conformidade")
-                    self.led_verde.ligar(5)
-                
-                else:
-                    print("nao esta em conformidade")
-                    self.led_vermelho.ligar(5)
-                    self.buz.ligar(3)
-
-                for i in (1,10):
-                    rospy.sleep(1)
-                    print("tempo de pausa de " +  i + " segundos")
-
-                print("Ajuste de zero: " + self.ajuste)
-                if(self.ajuste<=5 and self.ajuste>=-5):
-                    print("esta em conformidade")
-                    self.led_verde.ligar(5)
-
-                else:
-                    print("nao esta em conformidade")
-                    self.led_vermelho.ligar(5)
-                    self.buz.ligar(3)
-
+                print("qr code " +  str(qr_result) + " detectado")
+            
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=6)
             qtdade_bases_visited += 1
    
@@ -113,7 +94,6 @@ class fase3:
 if __name__ == "__main__":
     rospy.init_node('fase2')
     mav = MAV2()
-    detection=displayDetection(7)
+    detection = QRDetection()
     missao = fase3(mav,detection)
     missao.trajectory()
-

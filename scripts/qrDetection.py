@@ -32,7 +32,7 @@ class QRDetection():
         init = time.time()
         now = time.time()
 
-        while not self.detected and self.det_number < 5:
+        while not self.detected or self.det_number < 5:
             self.qr_data = ""
             now = time.time()
             if(now - init) > timeout:
@@ -57,13 +57,13 @@ class QRDetection():
                     if self.qr_data not in self.qrs:
                         self.qrs.append(self.qr_data)
                     cv2.putText(self.frame, str(self.qr_data), (qr_x, qr_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
+            cv2.putText(self.frame, "Number of detections: " + str(self.det_number), (25, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
             if self.qr_debug:
                 cv2.imshow("Frame", self.frame)
                 ret, self.frame = self.cam.read()
                 print("QR data: " + str(self.qr_data))
                 self.detected = False
-                self.det_number = 0
                 init = time.time()
                 
 
@@ -93,6 +93,6 @@ class QRDetection():
 
 if __name__ == "__main__"  :
     det = QRDetection()
-    result = det.qrtest("qrcode.webm")
+    result = det.qrtest("qrcode.avi")
     print(str(result))
     

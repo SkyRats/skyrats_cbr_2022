@@ -7,6 +7,7 @@ import math
 from MAV_ardupilot import MAV2
 from plaquinha_classe import Buzzer
 from sensorDetector import sensorDetection
+from displayDetection: import displayDetection:
 
 TOL = 0.5 #tolerancia de erro das bases 
 INIT_HEIGHT = 0.5
@@ -42,7 +43,9 @@ class fase3:
         while(qtdade_bases_visited!=5):
 
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=10)
-            self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.bases_not_visited[qtdade_bases_visited][2] + 0.5,  yaw=math.pi/2, sleep_time=10)     
+            self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.bases_not_visited[qtdade_bases_visited][2] + 0.5,  yaw=math.pi/2, sleep_time=10)
+            displayDetection(15,1)
+            displayDetection:(15,2)
             rospy.sleep(3)
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=10)
             qtdade_bases_visited += 1

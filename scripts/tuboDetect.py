@@ -24,7 +24,7 @@ class tuboDetection:
         return mask
 
     def x_conversion(self,x,width):
-        return  self.drone_y + ( x - width/2) * self.fatorDeCorrecaoWidth
+        return  self.drone_y + (( x - width/2) * self.fatorDeCorrecaoWidth * 0.786)
     
     def y_conversion(self,y,height):
         return  ( -1 * self.drone_x)+ ( y - height/2) * self.fatorDeCorrecaoWidth
@@ -69,8 +69,8 @@ class tuboDetection:
                     y_extremo1 =  img_height - ((box[0][0] + box[1][0])/2)
                     x_extremo2 =  img_width - ((box[2][1] + box[3][1])/2)
                     y_extremo2 =  img_height - ((box[2][0] + box[3][0])/2)
-                    print(f"Point 1  x:{self.x_conversion(x_extremo1,img_width)}  y:{self.y_conversion(y_extremo1, img_height)}")
-                    print(f"Point 2  x:{self.x_conversion(x_extremo2,img_width)}  y:{self.y_conversion(y_extremo2, img_height)}")
+                    print(f"Point 1  x:{self.x_conversion(y_extremo1,img_width)}  y:{self.y_conversion(img_height - x_extremo1, img_height)}")
+                    print(f"Point 2  x:{self.x_conversion(y_extremo2,img_width)}  y:{self.y_conversion(img_height - x_extremo2, img_height)}")
 
                     # box = np.int0(box)
                     # cv2.drawContours(self.frame,[box],0,(0,0,255),2)

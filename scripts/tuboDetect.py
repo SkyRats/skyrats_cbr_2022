@@ -59,6 +59,7 @@ class tuboDetection:
                     print(f"Largura do tubo : {h } cm")
 
                     cv2.imwrite("./tuboMask.png", img)
+                    cv2.imwrite("./tuboImg.png", self.frame)
 
                     rect = ((x, y), (w, h), theta)
                     box = cv2.boxPoints(rect) 
@@ -115,8 +116,8 @@ class tuboDetection:
         medidas_tubo , orange_image = self.getSquares(self.frame)
         
         
-        cv2.imshow('orange', orange_image)
-        cv2.imshow('Camera',self.frame)
+        #cv2.imshow('orange', orange_image)
+        #cv2.imshow('Camera',self.frame)
 
         
     

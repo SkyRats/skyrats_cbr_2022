@@ -300,9 +300,9 @@ if __name__ == '__main__':
     #        print("rotation: " + str(rot))
     #    except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
     #        continue
-    mav.change_auto_speed(0.25)
+    #mav.change_auto_speed(0.25)
     import math
-    mav.go_to_local(1,1,0.5,yaw=math.pi/2, sleep_time=10)
+    #mav.go_to_local(1,1,0.5,yaw=math.pi/2, sleep_time=10)
     mav.land()
     rospy.sleep(10)
     #mav.takeoff(1.2)

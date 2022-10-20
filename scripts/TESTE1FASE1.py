@@ -256,7 +256,7 @@ def centralize_on_cross(drone):
         V_mod = 0.15
 
         # Time for moving drone
-        tempo = 1/100 * math.sqrt(base[0]**2 + base[1]**2)
+        tempo = 1/25 * math.sqrt(base[0]**2 + base[1]**2)
 
         # Calculate de x and y components
         vel_x = base[0] / math.sqrt(base[0]**2 + base[1]**2) * V_mod
@@ -267,7 +267,7 @@ def centralize_on_cross(drone):
         # Set_vel time loop
         now = rospy.get_rostime()
         while not rospy.get_rostime() - now > rospy.Duration(secs=tempo) and not rospy.is_shutdown():
-            drone.set_vel(vel_x, vel_y)
+            drone.set_vel(-vel_y, vel_x, 0)
         drone.set_vel(0, 0, 0)
             
     return True
@@ -284,13 +284,13 @@ if __name__ == '__main__':
     mav = MAV2()
 
     # Takeoff
-    mav.takeoff(2)
+    mav.takeoff(1.5)
     rospy.sleep(5)
 
     print("centralize on cross")
     centralization = centralize_on_cross(mav)
 
     print("out of cross")
-    if centralization(mav):
+    if centralization:
         print("Landing drone...")
         mav.land()

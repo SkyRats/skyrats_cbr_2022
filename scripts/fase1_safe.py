@@ -40,9 +40,9 @@ class fase1:
         #self.mav.change_auto_speed(self.vel_cruzeiro)
         self.bases_stored.append(["0", 0, 0, INIT_HEIGHT])
         self.bases_visited += 1 
-        self.bases_stored.append(["A", -4.05, -0.5, 1.0])
+        self.bases_stored.append(["A", -4.3, -0.6, 1.0])
         self.bases_visited += 1 
-        self.bases_stored.append(["B", -5.67, 4.75, 1.0])
+        self.bases_stored.append(["B", -5.97, 4.87, 1.0])
         self.bases_visited += 1 
 
         #self.mav.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=2)

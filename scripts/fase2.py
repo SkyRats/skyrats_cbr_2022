@@ -21,26 +21,26 @@ class fase2:
         # altura do voo em relação ao tamanho incial da base costeira
         self.altitude = 0.5
 
-        self.coord_tubo_final = (-5.70, 3.45)
-        self.coord_tubo_inicial = (-0.7, 1.55)
+        self.coord_tubo_final = (-0.53, 4.36)
+        self.coord_tubo_inicial = (-5.67, 1.47)
 
         self.buz = Buzzer(22)
         
     def run(self):
-        self.mav.change_auto_speed(0.25)
+        self.mav.change_auto_speed(0.2)
         self.mav.takeoff(self.altitude)
         rospy.sleep(7)
 
         # vai para o inicio do tubo
         #self.mav.change_auto_speed(self.vel_cruzeiro)
-        self.mav.go_to_local(self.coord_tubo_inicial[0], self.coord_tubo_inicial[1], self.altitude, yaw=math.pi/2, sleep_time=20)
+        self.mav.go_to_local(self.coord_tubo_inicial[0], self.coord_tubo_inicial[1], self.altitude, yaw=math.pi/2, sleep_time=27)
         rospy.loginfo("Inicio do tubo encontrado, iniciando scaneamento")
 
         # vai para o fim do tubo
         #self.mav.change_auto_speed(self.vel_tubo)
         detecting = sensorDetection()
         sensor_count = 0
-        sleep_time = 35
+        sleep_time = 55
         init_time = now = time.time()
         while sensor_count < 5 and (not rospy.is_shutdown()) and (now-init_time < sleep_time):
             #rospy.loginfo("Altura de voo:" + str(self.altitude))
@@ -59,7 +59,7 @@ class fase2:
         rospy.loginfo('Fim do tubo encontrado! Voltando para a posição incial')
 
         #self.mav.change_auto_speed(self.vel_cruzeiro)
-        self.mav.go_to_local(0, 0.2, self.altitude + 0.5, yaw=math.pi/2, sleep_time=10)
+        self.mav.go_to_local(0, 0.2, self.altitude + 0.5, yaw=math.pi/2, sleep_time=25)
 
         self.mav.land()
 

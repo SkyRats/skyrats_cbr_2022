@@ -16,8 +16,9 @@ class fase3:
     def __init__(self, mav,detection):
         self.mav = mav
         self.bases_not_visited=[]
-        self.detection=detection
-                
+
+        self.detection= detection
+
         # altura do voo em relação ao tamanho incial da base costeira
         self.altitude = 1.5 - INIT_HEIGHT
 
@@ -107,6 +108,7 @@ class fase3:
         # self.mav2.land()            
 
 if __name__ == "__main__":
+    
     rospy.init_node('fase2')
     mav = MAV2()
     #detection=displayDetection(7)

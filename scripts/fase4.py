@@ -107,12 +107,6 @@ class fase4:
                 self.mav2.go_to_local(self.bases_not_visited[i][0],self.bases_not_visited[i][1], self.bases_not_visited[i][2] + 0.4)
                 qr_result = self.detection.qrdetection(self.mav2.cam)
                 rospy.logwarn("QR data: " + str(qr_result))
-            if not self.detection.detected:
-                rospy.logwarn("Trying to detect again...")
-                # Tries to detect from higher altitude
-                self.mav2.go_to_local(self.bases_not_visited[i][0],self.bases_not_visited[i][1], self.bases_not_visited[i][2] + 1)
-                qr_result = self.detection.qrdetection(self.mav2.cam)
-                rospy.logwarn("QR data: " + str(qr_result))
             self.detection.detected = False
 
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=4)

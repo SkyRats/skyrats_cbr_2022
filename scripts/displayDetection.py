@@ -7,7 +7,7 @@ from imutils import rotate_bound
 from statistics import mode
 from defisheye import Defisheye
 from imutils.perspective import four_point_transform
-DEBUG = False
+DEBUG = True
 
 class displayDetection:
     
@@ -399,8 +399,8 @@ class displayDetection:
             # tentamos aplicar o thresh hold mas apesar de ser mais bonitinho, n tava dando mt bom, se quiserem dar uma olhada está comentado abaixo
 
 
-            # thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 3, 2)
-            ret, thresh = cv2.threshold(gray, 110, 255, cv2.CHAIN_APPROX_NONE)
+            thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 3, 2)
+            #ret, thresh = cv2.threshold(gray, 110, 255, cv2.CHAIN_APPROX_NONE)
 
             if DEBUG:
                 cv2.imshow("thresh", thresh)
@@ -542,7 +542,7 @@ class displayDetection:
         result = self.detection_loop()
         return result
 
-detection = displayDetection(15)
-result = detection.main_interface()
-print(result)
+#detection = displayDetection(20)
+#result = detection.main_interface()
+#print(result)
 

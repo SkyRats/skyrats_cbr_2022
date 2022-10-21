@@ -31,7 +31,7 @@ class displayDetection:
         self.gas_percentual = []
         self.result = []
         self.zero_adjustment = []
-    
+        self.achado = False
 
     
     def find_squares(self, contours):
@@ -47,7 +47,7 @@ class displayDetection:
 
 
                 if aspectRatio >= 0.95 and aspectRatio < 1.1 and cv2.contourArea(contour) > 2000 and cv2.contourArea(contour) < 30000:
-
+                    self.achado = True
                     self.reshape = True
                     self.reshaped_image = four_point_transform(self.image, approx.reshape(4,2)) 
 
@@ -413,16 +413,16 @@ class displayDetection:
             if self.reshape:
                 self.find_reshaped_square()
                 
-
+            if self.achado:
+                if i == 0:
+                    print("DETECTADO")
 
             if self.squares:
 
                 # se chegamos até aqui, significa que o codigo ja passou pela verificação do quadrado e também dos circulos que representam os 
                 # sinais de porcentagem, portanto já podemos dizer que encontramos o display
 
-                if(i==0):
-
-                    print("DETECTADO")
+            
 
 
                 #sorted_squares = sorted(self.squares, key = cv2.contourArea, reverse = True )

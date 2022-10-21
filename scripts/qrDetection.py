@@ -32,7 +32,7 @@ class QRDetection():
         init = time.time()
         now = time.time()
 
-        while not self.detected or self.det_number < 5:
+        while not self.detected or self.det_number < 2:
             self.qr_data = ""
             now = time.time()
             if(now - init) > timeout:

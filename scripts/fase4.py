@@ -99,44 +99,43 @@ class fase4:
             capture = cv2.VideoCapture(0)
             capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
             capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            rospy.loginfo("Started QR detection")
             qr_result = self.detection.qrdetection(capture)
             rospy.logwarn("QR data: " + str(qr_result))
             if not self.detection.detected:
                 rospy.logwarn("Trying to detect again...")
-                # Tries to detect from lower altitude
-                self.mav2.go_to_local(self.bases_not_visited[i][0],self.bases_not_visited[i][1], self.bases_not_visited[i][2] + 0.4)
+                # Tries to detect from higher altitude
+                self.mav2.go_to_local(self.bases_not_visited[i][0],self.bases_not_visited[i][1], self.bases_not_visited[i][2] + 0.7)
                 qr_result = self.detection.qrdetection(self.mav2.cam)
                 rospy.logwarn("QR data: " + str(qr_result))
             self.detection.detected = False
 
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=4)
             qtdade_bases_visited += 1
+        rospy.logwarn("QRs detected: " + str(self.detection.qrs))
         rospy.logwarn("FINALIZADO")
         self.mav.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=15)
         self.mav.land()
 
-
     def trajectory_test(self):
-        self.mav2.change_auto_speed(0.5)
+        #self.mav2.change_auto_speed(0.5)
         self.detection.qr_debug = False
         self.mav2.takeoff(1)
 
-        self.mav2.go_to_local(1, 1, 1)
-        self.mav2.go_to_local(1, 1, 0.5)
+        self.mav2.go_to_local(-1, 1, 1)
+        self.mav2.go_to_local(-1, 1, 0.5)
         cam = cv2.VideoCapture(0)
         qr_result = self.detection.qrdetection(cam)
         rospy.logwarn("QR data: " + str(qr_result))
+
         if not self.detection.detected:
             rospy.logwarn("Trying to detect again...")
-            self.mav2.go_to_local(1, 1, 0.7)
+            self.mav2.go_to_local(-1, 1, 0.7)
             qr_result = self.detection.qrdetection(cam)
             rospy.logwarn("QR data: " + str(qr_result))
-        if not self.detection.detected:
-            rospy.logwarn("Trying to detect again...")
-            self.mav2.go_to_local(1, 1, 0.3)
             qr_result = self.detection.qrdetection(cam)
             rospy.logwarn("QR data: " + str(qr_result))
-        self.mav2.go_to_local(1, 1, 1)
+        self.mav2.go_to_local(-1, 1, 1)
         self.mav2.go_to_local(0, 0, 1)
         self.mav2.land()
         rospy.logwarn("QRs detected: " + str(self.detection.qrs))

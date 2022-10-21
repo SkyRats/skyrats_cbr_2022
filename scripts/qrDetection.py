@@ -19,7 +19,7 @@ class QRDetection():
         self.bases_detected = 0
         self.cam_id = None
     
-    def qrdetection(self, vid):
+    def qrdetectionDefisheye(self, vid):
         self.frame = vid.read()
         
         #camera parameters
@@ -75,14 +75,14 @@ class QRDetection():
         cv2.destroyAllWindows()
         return self.qr_data # qr_result is a list with qr infos from all readings 
 
-    def qrdetectionFisheye(self, vid):
+    def qrdetection(self, vid):
         self.frame = vid.read()
         
         timeout = 5 # timeout in seconds for the drone to give up the qr detection
         init = time.time()
         now = time.time()
 
-        while not self.detected or self.det_number < 2:
+        while not self.detected:
             self.qr_data = ""
             now = time.time()
             if(now - init) > timeout:
@@ -139,6 +139,6 @@ class QRDetection():
 
 if __name__ == "__main__"  :
     det = QRDetection()
-    result = det.qrtest("qrcode.avi")
+    result = det.qrtest(4)
     print(str(result))
     

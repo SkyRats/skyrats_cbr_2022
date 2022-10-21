@@ -7,7 +7,7 @@ import math
 from MAV_ardupilot import MAV2
 from plaquinha_classe import Led_e_Buzzer, Led
 from sensorDetector import sensorDetection
-#from displayDetection import displayDetection
+from displayDetection import displayDetection
 
 TOL = 0.5 #tolerancia de erro das bases 
 INIT_HEIGHT = 0.5
@@ -52,13 +52,13 @@ class fase3:
 
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=10)
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.bases_not_visited[qtdade_bases_visited][2] + 0.5,  yaw=math.pi/2, sleep_time=3)
-            #self.gas,self.ajuste=self.detection.main_interface()
+            self.gas,self.ajuste=self.detection.main_interface()
             if(self.ajuste==100):
                 print("display não detectado")
             
             else:
                 qtdade_sensores += 1
-                print("Gas percentual: " + str(self.gas))
+                #print("Gas percentual: " + str(self.gas))
                 if(self.gas<=55 and self.gas>=45):
                     print("esta em conformidade")
                     self.led_verde.ligar(5)
@@ -71,7 +71,7 @@ class fase3:
                     rospy.sleep(1)
                     print("tempo de pausa de " +  str(i) + " segundos")
             
-                print("Ajuste de zero: " + str(self.ajuste))
+                #print("Ajuste de zero: " + str(self.ajuste))
                 if(self.ajuste<=5 and self.ajuste>=-5):
                     print("esta em conformidade")
                     self.led_verde.ligar(5)
@@ -113,8 +113,7 @@ if __name__ == "__main__":
     
     rospy.init_node('fase2')
     mav = MAV2()
-    #detection=displayDetection(7)
-    detection = 1
+    detection=displayDetection(8)
     missao = fase3(mav,detection)
     missao.trajectory()
 

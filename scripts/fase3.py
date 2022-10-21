@@ -45,9 +45,10 @@ class fase3:
         self.bases_not_visited.append(base4)
         self.bases_not_visited.append(base5)     
         qtdade_bases_visited = 0
+        qtdade_sensores = 0
         self.mav.takeoff(self.altitude) 
         rospy.sleep(7)
-        while(qtdade_bases_visited!=5):
+        while(qtdade_bases_visited!=5) and (qtdade_sensores!=3):
 
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=10)
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.bases_not_visited[qtdade_bases_visited][2] + 0.5,  yaw=math.pi/2, sleep_time=3)
@@ -56,6 +57,7 @@ class fase3:
                 print("display não detectado")
             
             else:
+                qtdade_sensores += 1
                 print("Gas percentual: " + str(self.gas))
                 if(self.gas<=55 and self.gas>=45):
                     print("esta em conformidade")

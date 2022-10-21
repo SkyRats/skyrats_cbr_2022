@@ -7,7 +7,7 @@ from imutils import rotate_bound
 from statistics import mode
 from defisheye import Defisheye
 from imutils.perspective import four_point_transform
-DEBUG = True
+DEBUG = False
 
 class displayDetection:
     

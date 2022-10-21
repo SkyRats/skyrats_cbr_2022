@@ -508,9 +508,9 @@ class displayDetection:
             end = time.time()
             difTime = end - start
 
-            cv2.imshow("image", self.image)
-            if cv2.waitKey(5) & 0xFF == 27:
-                break
+            #cv2.imshow("image", self.image)
+            #if cv2.waitKey(5) & 0xFF == 27:
+            #    break
             # print("len1:",len(self.gas_percentual_list1))   
             # print("len2:",len(self.gas_percentual_list2)) 
             # print("len3: ", len(self.zero_adjustment_list))
@@ -534,7 +534,9 @@ class displayDetection:
 
             self.zero_adjustment = 100
 
-        return self.gasPercentual,self.zero_adjustment
+
+        return self.gasPercentual, self.zero_adjustment
+
 
             
     def main_interface(self):
@@ -545,4 +547,5 @@ class displayDetection:
 #detection = displayDetection(20)
 #result = detection.main_interface()
 #print(result)
+
 

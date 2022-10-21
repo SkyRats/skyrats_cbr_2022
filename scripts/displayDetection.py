@@ -534,7 +534,7 @@ class displayDetection:
 
             self.zero_adjustment = 100
 
-            return self.gasPercentual,self.zero_adjustment
+        return self.gasPercentual,self.zero_adjustment
 
             
     def main_interface(self):

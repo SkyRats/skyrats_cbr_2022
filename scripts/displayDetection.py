@@ -18,7 +18,7 @@ class displayDetection:
         # ver imagem rotacionada no teste, se ela ficar virada em 180 graus, vamos inverter
         # para o teste com a camera do drone, ela rotacionou certo 
 
-        self.cap = cv2.VideoCapture('/home/renato/Downloads/display1.avi')
+        self.cap = cv2.VideoCapture(0)
         self.degrees = 0
         self.squares = []
         self.period = period
@@ -457,7 +457,7 @@ class displayDetection:
             self.zero_adjustment=int(mode(self.zero_adjustment_list))
 
 
-        return self.gasPercentual,self.zero_adjustment
+            return self.gasPercentual,self.zero_adjustment
 
         else:
 

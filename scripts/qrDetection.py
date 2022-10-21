@@ -75,6 +75,52 @@ class QRDetection():
         cv2.destroyAllWindows()
         return self.qr_data # qr_result is a list with qr infos from all readings 
 
+    def qrdetectionFisheye(self, vid):
+        self.frame = vid.read()
+        
+        timeout = 5 # timeout in seconds for the drone to give up the qr detection
+        init = time.time()
+        now = time.time()
+
+        while not self.detected or self.det_number < 2:
+            self.qr_data = ""
+            now = time.time()
+            if(now - init) > timeout:
+                return "Timeout for QR detection exceeded"
+            ret, self.frame = vid.read()
+            
+            self.qr_result = decode(self.frame)
+
+            if len(self.qr_result)>0:
+                self.detected = True
+                init = time.time()
+                self.det_number += 1
+
+                for barcode in self.qr_result:       # writing qr code info in frame
+
+                    (qr_x, qr_y, qr_w, qr_h) = barcode.rect
+                    cv2.rectangle(self.frame, (qr_x, qr_y), (qr_x + qr_w, qr_y + qr_h), (0, 0, 255), 2)
+                    self.qr_data = barcode.data.decode("utf-8")
+                    if self.qr_data not in self.qrs:
+                        self.qrs.append(self.qr_data)
+                    cv2.putText(self.frame, str(self.qr_data), (qr_x, qr_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
+            cv2.putText(self.frame, "Number of detections: " + str(self.det_number), (25, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+
+            if self.qr_debug:
+                cv2.imshow("Frame", self.frame)
+                ret, self.frame = self.cam.read()
+                print("QR data: " + str(self.qr_data))
+                self.detected = False
+                init = time.time()
+                
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+                #cv2.destroyAllWindows()
+
+        # cleanup
+        cv2.destroyAllWindows()
+        return self.qr_data # qr_result is a list with qr infos from all readings 
 
     def qrtest(self, cam_id=None, frame=None): 
         if cam_id != None:

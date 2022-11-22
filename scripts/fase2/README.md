@@ -89,5 +89,7 @@ Essa estratégia foi utilizada caso em uma das iterações a função não detec
 ### Máscaras
 Para a detectção em si dos quadrados, utlizamos a geração de máscaras de cores 
 para selecionar somente os pixels da imagem dentro do range especificado.
-O range é calibrado a partir do nosso [calibrador de mácaras](https://github.com/SkyRats/calibrador-cores)
+O range é calibrado a partir do nosso [calibrador de mácaras](https://github.com/SkyRats/calibrador-cores).
+
+
 ![This is an image](./images/image3.jpeg)

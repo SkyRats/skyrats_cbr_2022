@@ -1,6 +1,9 @@
 import rospy
 from geometry_msgs.msg import PoseStamped
 
+# Codigo rodado em um terminal separado para papresentar 
+# a altura do drone em relacao ao tubo para o juiz
+
 class fase2_altura():
     def __init__(self):
         self.local_atual = rospy.Subscriber("/mavros/vision_pose/pose", PoseStamped, self.local_callback)

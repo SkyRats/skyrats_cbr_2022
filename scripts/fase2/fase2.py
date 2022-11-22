@@ -5,7 +5,7 @@ import numpy as np
 import time
 import math
 from MAV_ardupilot import MAV2
-from plaquinha_classe import Buzzer
+from skyrats_cbr_2022.scripts.fase2.buzzer import Buzzer
 from sensorDetector import sensorDetection
 
 class fase2:

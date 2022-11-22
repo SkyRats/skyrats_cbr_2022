@@ -7,7 +7,7 @@ na tubulação. Serão colocados 5 sensores de monitoramento no oleoduto, repres
 quadrados coloridos, de 5 cm de lado, nas cores vermelho ou verde, sendo vermelho o
 sensor que está detectando o defeito. As coordenadas do tubo serão fornecidas.
 
-![This is an image]("./images.image1.jpeg")
+![This is an image](./images/image1.jpeg)
 
 ## INFORMAÇÕES DO REGULAMENTO
 ### A TAREFA

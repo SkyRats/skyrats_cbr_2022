@@ -80,5 +80,14 @@ Classe com o buzzer para emitir o aviso sonoro
 quando um sensor vermelhor for detctado.
 
 ### sensorDetector.py
-Classe para a detecção 
+Classe para a detecção dos sensores.
 
+Ela cria, para cada cor de sensor, uma lista com a contagem de sensores da cor correspondente que estão na tela. A cada iteração da função, essa lista é atualizada, removendo a contagem mais antiga e adicionando a recente. Caso a moda (valor de maior ocorrência) da lista mude, significa que houve uma alteração da quantidade de sensores na tela, ou seja, um novo sensor foi detectado ou um sensor já detectado saiu da tela.
+
+Essa estratégia foi utilizada caso em uma das iterações a função não detecte o sensor na tela mesmo que ele esteja lá. Assim, mesmo que por algumas iterações o sensor não seja detectado, é a moda da lista que determina se ele está lá ou não. O número de iterações necessárias para que a não detecção realmente signifique que o sensor não está mais na tela é regulada pela tolerância (TOL), que é o tamanho da lista.
+
+### Máscaras
+Para a detectção em si dos quadrados, utlizamos a geração de máscaras de cores 
+para selecionar somente os pixels da imagem dentro do range especificado.
+O range é calibrado a partir do nosso [calibrador de mácaras](https://github.com/SkyRats/calibrador-cores)
+![This is an image](./images/image3.jpeg)

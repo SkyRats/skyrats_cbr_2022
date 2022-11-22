@@ -92,4 +92,4 @@ para selecionar somente os pixels da imagem dentro do range especificado.
 O range de cada cor é calibrado a partir do nosso [calibrador de mácaras](https://github.com/SkyRats/calibrador-cores).
 
 
-![This is an image](./images/image3.jpeg)
+![This is an image](./images/image3.jpeg) "Aplicação das máscaras de verd e vermelho na imagem"

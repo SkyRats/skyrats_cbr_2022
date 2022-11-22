@@ -21,9 +21,11 @@ class fase2:
         # altura do voo em relação ao tamanho incial da base costeira
         self.altitude = 0.5
 
+        # coordenadas do tubo
         self.coord_tubo_final = (-0.53, 4.36)
         self.coord_tubo_inicial = (-5.67, 1.47)
 
+        #pino do buzzer
         self.buz = Buzzer(22)
         
     def run(self):
@@ -36,24 +38,32 @@ class fase2:
         self.mav.go_to_local(self.coord_tubo_inicial[0], self.coord_tubo_inicial[1], self.altitude, yaw=math.pi/2, sleep_time=27)
         rospy.loginfo("Inicio do tubo encontrado, iniciando scaneamento")
 
-        # vai para o fim do tubo
+        # vai para o fim do tubo enquanto detecta os sensores
         #self.mav.change_auto_speed(self.vel_tubo)
         detecting = sensorDetection()
         sensor_count = 0
         sleep_time = 55
         init_time = now = time.time()
-        while sensor_count < 5 and (not rospy.is_shutdown()) and (now-init_time < sleep_time):
+        
+        # Enquanto não detectar os 5 sensores da fase e o tempo não tiver passado do limite
+        while sensor_count < 5 and (not rospy.is_shutdown()) and (now - init_time < sleep_time):
             #rospy.loginfo("Altura de voo:" + str(self.altitude))
             now = time.time()
+
+            # Detectar sensor verde
             sensor = detecting.detect_sensors()
             if sensor == "verde":
                 print("Sensor verde detectado")
                 sensor_count = sensor_count + 1
+            
+            # Detctar sensor vermelhor e ligar o buzzer por 3 segundos
             if sensor == "vermelho":
                 self.mav.set_vel(0,0,0)
                 self.buz.ligar(3)
                 print("Sensor vermelho detectado")
                 sensor_count = sensor_count + 1
+            
+            # Continuar indo pro final do tubo
             self.mav.set_position(self.coord_tubo_final[0], self.coord_tubo_final[1],self.altitude,yaw=math.pi/2)
 
         rospy.loginfo('Fim do tubo encontrado! Voltando para a posição incial')

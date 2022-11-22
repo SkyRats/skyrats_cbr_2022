@@ -2,7 +2,12 @@ import cv2
 import numpy as np
 from statistics import mode
 
+# Tolerância de detecção de falha
+# Quanto maior, mais tempo levará para detectar um sensor pela primeira vez
+# Mas ela continuará detectando ele mesmo com períodos maiores de falha
 TOL = 15
+
+
 class sensorDetection:
     
     def __init__(self):
@@ -14,50 +19,54 @@ class sensorDetection:
         
         
     def get_mask(self, hsv , lower_color , upper_color):
+        # Monta a mascara com os ranges selecionados
         lower = np.array(lower_color)
         upper = np.array(upper_color) 
         mask = cv2.inRange(hsv , lower, upper)
         return mask
 
     def get_square_area(self,img):
+        # Retorna uma lista com os quadrados que tem area maior ou igual a min_area
+
         squaresDetected = []
-        min_area = 300 #checar valor mais apropriado
+        min_area = 300 # Area minima para um quadrado ser contabilizado
     
         contours,junk=cv2.findContours(img,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-        #cv2.drawContours(frame,contours,-1,(255,0,0),3)
+        # Se quiser ver os contornos:
+        # cv2.drawContours(frame,contours,-1,(255,0,0),3)
         
         for contour in contours:
             area = cv2.contourArea(contour)
-        
             if area >= min_area:
-                #cv2.drawContours(frame,[contour],0,(255,0,0),3)
+                squaresDetected.append(contour)
+
+                # Desenha um retangulo em torno do quadrado detectado (opcional)
                 x,y,w,h=cv2.boundingRect(contour)
                 cv2.rectangle(self.frame,(x,y),(x+w,y+h),(0,0,255),3)
-                squaresDetected.append(contour)
-        
-        
 
         return squaresDetected
 
     def getSquares (self, image):
         
-        #Mascaras testes
+        # Mascaras verde e vermelha
+        # Calibrar antes de usar
         lower_green = [54, 78, 91]
         upper_green = [90, 193, 216]
 
         lower_red = [0, 143, 0]
         upper_red = [6, 228, 255]
 
+        # Criando as máscaras
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         green_mask = self.get_mask(hsv, lower_green, upper_green)
         red_mask = self.get_mask(hsv, lower_red, upper_red)
 
 
-        #green_result é a imagem colorida da máscara
+        # Os passos abaixo servem só para melhorar a visualizacao
+        # da mascara para o usuario, nao interferem na deteccao
         green_result = cv2.bitwise_and(image , image , mask= green_mask)
         red_result = cv2.bitwise_and(image , image , mask= red_mask)
 
-        #plotting
         erode_size = 5
         dilate_size = 5
 
@@ -70,7 +79,7 @@ class sensorDetection:
         red_result = cv2.dilate(red_result, dilate_kernel)
         red_result = cv2.erode(red_result, erode_kernel)
 
-
+        # Retorna a contagem de quadrados verdes e vermelhos e as imagens para visualizacao das mascaras
         return (self.get_square_area(green_mask), self.get_square_area(red_mask)), green_result, red_result
     
     def detect_sensors(self):
@@ -82,42 +91,46 @@ class sensorDetection:
 
         (green_detected,red_detected), green_image, red_image = self.getSquares(self.frame)
 
-        #cv2.imshow('Red', red_image)
-        #cv2.imshow('Green', green_image)
-        #cv2.imshow('Camera',self.frame)
+        # Para ver as imagens das mascaras aplicadas e da camera usada
+        # cv2.imshow('Red', red_image)
+        # cv2.imshow('Green', green_image)
+        # cv2.imshow('Camera',self.frame)
 
-        #Updating Records
+        # Updating Records
+        # Retira o primeiro elemento e adiciona o novo no final
         self.greenRecord.pop(0)
         self.greenRecord.append(len(green_detected))
 
         self.redRecord.pop(0)
         self.redRecord.append(len(red_detected))
 
+        # Checa se a moda da lista de sensores mudou, indicando
+        # que um novo sensor foi detectado ou que um sensor detectado ja saiu da tela
 
+        # Sensor saiu da tela
         if(mode(self.greenRecord) < self.greenSquaresCount):
             self.greenSquaresCount = mode(self.greenRecord)
+        # Novo sensor entrou na tela
         if(mode(self.greenRecord) > self.greenSquaresCount):
             self.greenSquaresCount = mode(self.greenRecord)
             self.greenRecord = [ self.greenSquaresCount for i in range(TOL)]
             sensor = "verde"
 
+        # Sensor saiu da tela
         if(mode(self.redRecord) < self.redSquaresCount):
             self.redSquaresCount = mode(self.redRecord)
+        # Novo sensor entrou na tela
         if(mode(self.redRecord) > self.redSquaresCount):
             self.redSquaresCount = mode(self.redRecord)
             self.redRecord = [ self.redSquaresCount for i in range(TOL)]
             sensor = "vermelho"
-    
-        #if cv2.waitKey(20) & 0xFF == ord('q'):
-            #return 1
 
         return sensor
 
 
-
+# Enquanto não chegar ao fim do tubo, ir lendo os sensores da tela
 if __name__ == "__main__":
     detecting = sensorDetection()
-    sensorCount = 0
     fimdoTubo = False
 
     while not fimdoTubo :

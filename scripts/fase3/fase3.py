@@ -6,7 +6,6 @@ import time
 import math
 from MAV_ardupilot import MAV2
 from plaquinha_classe import Led_e_Buzzer, Led
-from sensorDetector import sensorDetection
 from displayDetection import displayDetection
 
 TOL = 0.5 #tolerancia de erro das bases 

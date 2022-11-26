@@ -1,7 +1,7 @@
 # CBR 2022 - EQUIPE SKYRATS
 
 ## 1° LUGAR - FLYING ROBOTS TRIAL LEAGUE 🎉🎉🎉
-A competição consistiu de 4 Fases, cujas informações podem ser encontradas neste mesmo repositório, na pasta correspondente de cada fase.
+A competição consistiu de 4 Fases, cujas informações podem ser encontradas neste mesmo repositório, na pasta correspondente de cada fase. As tecnologias utilizadas (nas áreas  mecânica, hardware e software) estão descritdas no pdf do TDP (Team Description Paper).
 
 ![This is an image](./images/equipe.jpg)
 

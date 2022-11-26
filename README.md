@@ -5,6 +5,12 @@ A competição consistiu de 4 Fases, cujas informações podem ser encontradas n
 
 ![This is an image](./images/equipe.jpg)
 
+### PONTUAÇÃO FINAL
+- Fase 1 : 100 pontos
+- Fase 2 : 100 pontos
+- Fase 3 : 30 pontos
+- Fase 4 : 10 pontos
+
 
 ## 2° LUGAR - TECHNICAL CHALLENGE 🎉🎉🎉
 

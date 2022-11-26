@@ -15,4 +15,4 @@ a adaptação dos valores dos códigos de detecção às condições
 reais da prova.
 A apresentação completa pode ser assistida nesse  [link](https://www.instagram.com/tv/CkBAi-rAESy/?igshid=ZmRlMzRkMDU%3D).
 
-![This is an image](./images/equipe.jpeg) Imagem do drone utilizado na competição
+![This is an image](./images/drone.jpeg) Imagem do drone utilizado na competição

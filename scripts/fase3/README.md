@@ -7,7 +7,7 @@ Além disso, o drone deve indicar se os valores lidos estão em conformidade
 com os valores esperados, sendo eles entre **45%** e **55%** para o percentual
 de gás e entre **5%** e **-5%** para o valor do ajuste de zero.
 
-![exemplo](././images/display_example.png)
+![exemplo](../../images/display_example.png)
 
 ## Pontuação
 
@@ -40,5 +40,5 @@ a leitura seja feita em qualquer orientação, como visto no exemplo abaixo.
 
 Mais detalhes de utilização estão comentados no próprio código.
 
-![working](././images/working.png)
+![working](../../images/working.png)
 

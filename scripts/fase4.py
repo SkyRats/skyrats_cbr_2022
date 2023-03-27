@@ -7,10 +7,12 @@ import os
 #from MAV2 import MAV2
 from MAV_ardupilot import MAV2
 import time
+import math
 #import rclpy
 import rospy
 #from rclpy.clock import Clock
 from qrDetection import QRDetection
+from plaquinha_classe import Led
 
 CAM_FOV = 1.64061 #94 graus
 
@@ -30,8 +32,10 @@ class fase4:
         self.bases_visited = []
         self.destination = None
         self.detection = QRDetection()
-        self.detection.cam = mav2.cam
+        #self.detection.cam = mav2.cam
         self.cam_id = 0
+        self.altitude = 1.0
+        self.led_verde = Led(17)
     """
     def trajectory(self):
         self.detection.qr_debug = False
@@ -75,6 +79,10 @@ class fase4:
         rospy.logwarn("QRs detected: " + str(self.detection.qrs))
     """
     def trajectory(self):
+        
+        capture = cv2.VideoCapture(0)
+        capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
         base1=(-4.3, -0.6, 0.5)
         base2=(-5.875, -0.05, -0.5)
@@ -88,64 +96,68 @@ class fase4:
         self.bases_not_visited.append(base4)
         self.bases_not_visited.append(base5)     
         qtdade_bases_visited = 0
-        self.mav.takeoff(self.altitude) 
+        self.mav2.takeoff(self.altitude) 
         rospy.sleep(7)
         while(qtdade_bases_visited!=5):
 
-            self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=10)
-            self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.bases_not_visited[qtdade_bases_visited][2] + 0.5,  yaw=math.pi/2, sleep_time=3)
+            self.mav2.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=10)
+            self.mav2.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.bases_not_visited[qtdade_bases_visited][2] + 0.5,  yaw=math.pi/2, sleep_time=5)
             
             # QR DETECTION
-            capture = cv2.VideoCapture(0)
-            capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-            capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            #capture = cv2.VideoCapture(0)
+            #capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            #capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
             rospy.loginfo("Started QR detection")
             qr_result = self.detection.qrdetection(capture)
-            rospy.logwarn("QR data: " + str(qr_result))
+            #rospy.logwarn("QR data: " + str(qr_result))
             if not self.detection.detected:
                 rospy.logwarn("Trying to detect again...")
                 # Tries to detect from higher altitude
-                self.mav2.go_to_local(self.bases_not_visited[i][0],self.bases_not_visited[i][1], self.bases_not_visited[i][2] + 0.7)
-                qr_result = self.detection.qrdetection(self.mav2.cam)
-                rospy.logwarn("QR data: " + str(qr_result))
+                self.mav2.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.bases_not_visited[qtdade_bases_visited][2] + 0.7,  yaw=math.pi/2, sleep_time=5)
+                qr_result = self.detection.qrdetection(capture)
+            rospy.logwarn("QR data: " + str(qr_result))
+            #if self.detection.detected:
+                #self.led_verde.ligar(3)
             self.detection.detected = False
+            self.detection.qr_data = None
 
-            self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=4)
+            self.mav2.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=5)
             qtdade_bases_visited += 1
         rospy.logwarn("QRs detected: " + str(self.detection.qrs))
         rospy.logwarn("FINALIZADO")
-        self.mav.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=15)
-        self.mav.land()
+        self.mav2.go_to_local(0, 0, self.altitude, yaw=math.pi/2, sleep_time=15)
+        self.mav2.land()
 
     def trajectory_test(self):
         #self.mav2.change_auto_speed(0.5)
         self.detection.qr_debug = False
         self.mav2.takeoff(1)
-
+        rospy.sleep(7)
         #self.mav2.go_to_local(-1, 1, 1)
         #self.mav2.go_to_local(-1, 1, 0.5)
-        self.mav2.go_to_local(-2.15, 1.81, 0)  # base 3
+        #self.mav2.go_to_local(-2.15, 1.81, 0)  # base 3
+        self.mav2.go_to_local(-2.15, 1.81, 0, yaw=math.pi/2, sleep_time=15)
         cam = cv2.VideoCapture(0)
         qr_result = self.detection.qrdetection(cam)
         rospy.logwarn("QR data: " + str(qr_result))
 
         if not self.detection.detected:
             rospy.logwarn("Trying to detect again...")
-            self.mav2.go_to_local(-2.15, 1.81, 0.2)
+            self.mav2.go_to_local(-2.15, 1.81, 0.2, yaw=math.pi/2, sleep_time=4)
             qr_result = self.detection.qrdetection(cam)
             rospy.logwarn("QR data: " + str(qr_result))
             qr_result = self.detection.qrdetection(cam)
             rospy.logwarn("QR data: " + str(qr_result))
-        self.mav2.go_to_local(-2.15, 1.81, 1)
-        self.mav2.go_to_local(0, 0, 1)
+        self.mav2.go_to_local(-2.15, 1.81, 1, yaw=math.pi/2, sleep_time=15)
+        #self.mav2.go_to_local(0, 0, 1)
+        self.mav2.go_to_local(0, 0, 1, yaw=math.pi/2, sleep_time=15)
         self.mav2.land()
         rospy.logwarn("QRs detected: " + str(self.detection.qrs))
 
 
 if __name__ == "__main__":
-    rclpy.init()
+    rospy.init_node("fase4")
     mav = MAV2()
     missao = fase4(mav)
-    missao.trajectory_test()
-    #missao.trajectory()
-    
+    #missao.trajectory_test()
+    missao.trajectory()

@@ -53,6 +53,7 @@ class fase3:
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.altitude,  yaw=math.pi/2, sleep_time=10)
             self.mav.go_to_local(self.bases_not_visited[qtdade_bases_visited][0],self.bases_not_visited[qtdade_bases_visited][1], self.bases_not_visited[qtdade_bases_visited][2] + 0.5,  yaw=math.pi/2, sleep_time=3)
             self.gas,self.ajuste=self.detection.main_interface()
+            #self.detection.main_interface()
             if(self.ajuste==100):
                 print("display não detectado")
             
@@ -66,11 +67,10 @@ class fase3:
                 else:
                     print("nao esta em conformidade")
                     self.led_vermelho_e_buzzer.ligar(5)
-            
+             
                 for i in range(1,10):
                     rospy.sleep(1)
                     print("tempo de pausa de " +  str(i) + " segundos")
-            
                 #print("Ajuste de zero: " + str(self.ajuste))
                 if(self.ajuste<=5 and self.ajuste>=-5):
                     print("esta em conformidade")

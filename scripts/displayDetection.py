@@ -305,8 +305,8 @@ class displayDetection:
                 
                 i = i + 1
                      
-            if cv2.waitKey(5) & 0xFF == 27:
-                break
+            #if cv2.waitKey(5) & 0xFF == 27:
+            #    break
 
         if finded:
 
@@ -544,7 +544,7 @@ class displayDetection:
         result = self.detection_loop()
         return result
 
-#detection = displayDetection(20)
+#detection = displayDetection(7)
 #result = detection.main_interface()
 #print(result)
 

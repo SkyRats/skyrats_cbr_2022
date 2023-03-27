@@ -67,12 +67,12 @@ class QRDetection():
                 init = time.time()
                 
 
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
+            #if cv2.waitKey(1) & 0xFF == ord("q"):
+            #    break
                 #cv2.destroyAllWindows()
 
         # cleanup
-        cv2.destroyAllWindows()
+        #cv2.destroyAllWindows()
         return self.qr_data # qr_result is a list with qr infos from all readings 
 
     def qrdetection(self, vid):
@@ -114,12 +114,12 @@ class QRDetection():
                 init = time.time()
                 
 
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
+            #if cv2.waitKey(1) & 0xFF == ord("q"):
+            #    break
                 #cv2.destroyAllWindows()
 
         # cleanup
-        cv2.destroyAllWindows()
+        #cv2.destroyAllWindows()
         return self.qr_data # qr_result is a list with qr infos from all readings 
 
     def qrtest(self, cam_id=None, frame=None): 
@@ -133,7 +133,7 @@ class QRDetection():
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         self.qr_debug = True
         result = self.qrdetection(self.cam)
-        self.cam.release()    
+        #self.cam.release()    
         return result
 
 
